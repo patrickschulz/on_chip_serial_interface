@@ -1,4 +1,4 @@
-sources := config.v defines.v register_cell.v shift_register.v bit_counter.v serial_ctrl.v toplevel.v
+sources := config.v register_cell.v shift_register.v bit_counter.v serial_ctrl.v toplevel.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
 
@@ -22,8 +22,9 @@ simulate:
 
 .PHONY: simulate_synth
 simulate_synth: synth
-	iverilog $(VFLAGS) config.v defines.v serial_interface_synthesized.v testbench.v $(stdlib).v -o design
+	iverilog $(VFLAGS) config.v serial_interface_synthesized.v testbench.v $(stdlib).v -o design
 	vvp design
+	rm design
 
 .PHONY: waveforms
 waveforms:
@@ -65,8 +66,6 @@ timing: synth
 	echo read_liberty $(stdlib).lib >> $(timing_script)
 	echo link_design serial_interface >> $(timing_script)
 	echo create_clock -name clk -period 10000 {clk} >> $(timing_script)
-	echo create_clock -name sync_in -period 160000 -waveform {5000 85000} {sync_in} >> $(timing_script)
-	#echo set_input_delay -reference_pin clk 100 configreg
 	echo report_checks -path_delay min_max >> $(timing_script)
 	sta -exit -no_splash $(timing_script)
 	rm $(timing_script)

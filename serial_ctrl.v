@@ -3,45 +3,69 @@ module serial_ctrl
     /* external ports */
     inout data_inout,
     input clk,
-    input reset_in,
     /* module ports */
     input count_reached_in,
     input data_out_shift_reg_in,
     output reset_count_out,
     output update_shift_reg_out,
     output reset_shift_reg_out,
-    output enable_shift_register
+    output enable_shift_register,
+    output write_shift_register
 );
-    reg enable_write_pre, enable_write;
-    //assign data_inout = (enable_write) ? data_out_shift_reg_in : 1'bZ;
+    wire enable_write;
+    assign enable_write = (curr_state == SEND_DATA_ST);
     tbuf bidir_data_buffer(
         .I(data_out_shift_reg_in),
         .O(data_inout),
         .EN(enable_write)
     );
 
+    // the maximum number of allowed consecutive 1s is DATA_LEN, since every
+    // command ends with a zero and there is a zero stop bit after
+    // commands/data transmissions
+    // This means that if the controller sends out more than DATA_LEN 1s, this
+    // means that the circuit should be reset
+    reg [`BIT_COUNT_LEN - 1:0] rst_reg, rst_reg_pre;
+    always @(negedge clk) begin
+        rst_reg <= rst_reg_pre;
+    end
+    always @(posedge clk) begin
+        if(data_inout) begin
+            rst_reg_pre <= rst_reg - 1;
+        end
+        else begin
+            rst_reg_pre <= 2**`BIT_COUNT_LEN - 1;
+        end
+    end
+
     reg reset_shift_reg_out;
-    reg enable_shift_register;
+    wire enable_shift_register;
+    assign enable_shift_register = (curr_state == RECEIVE_DATA_ST) | (curr_state == SEND_DATA_ST);
     reg update_shift_reg_out;
+
+    wire write_shift_register;
+    assign write_shift_register = (curr_state == RECEIVE_DATA_ST);
 
     // control part state machine
     localparam 
-        RESET_ST          = 4'b0000,  // reset control circuit
-        RECOVER_ST        = 4'b0001,  // recover from write/read shift to prevent glitches
-        IDLE_ST           = 4'b0010,  // wait for command
-        UPDATE_ST         = 4'b0011,  // update shift register
-        RESET_REGISTER_ST = 4'b0100,  // reset shift register
-        RCV_CMD_ST        = 4'b0101,  // currently receiving a command
-        ACK_CMD_ST        = 4'b0110,  // acknowledged a command successfully
-        RCV_DATA_ST       = 4'b0111,  // receiving data
-        SND_DATA_ST       = 4'b1000;  // sending data
+        RESET_ST             = 4'b0000,  // reset control circuit
+        SKIP_STOP_ST         = 4'b0001,  // skip stop bit
+        WAIT_FOR_COMMAND_ST  = 4'b0010,  // wait for command
+        UPDATE_ST            = 4'b0011,  // update shift register
+        RESET_REGISTER_ST    = 4'b0100,  // reset shift register
+        RECEIVE_DATA_ST      = 4'b0101,  // receiving data
+        SEND_DATA_SETUP_ST   = 4'b0110,  // sending data, setup tristate buffer
+        SEND_DATA_RECOVER_ST = 4'b0111,  // recover from write/read shift to prevent glitches
+        SEND_DATA_ST         = 4'b1000;  // sending data
 
     // command types to be received from the external controller
+    // all commands end with a zero bit
+    // this ensures that the line is pulled down after a command
     localparam
-        RESET_CMD      = 2'b00, // reset internal state
-        START_SND_CMD  = 2'b01, // start transmission of saved data
-        START_RCV_CMD  = 2'b10, // start receiving of data
-        UPDATE_CMD     = 2'b11; // update the shift registers output cells
+        RESET_CMD         = 3'b000, // reset internal state
+        START_SEND_CMD    = 3'b010, // start transmission of saved data
+        START_RECEIVE_CMD = 3'b100, // start receiving of data
+        UPDATE_CMD        = 3'b110; // update the shift registers output cells
 
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
@@ -60,48 +84,8 @@ module serial_ctrl
         end
     end
 
-    /* enable shift register */
-    reg enable_shift_register_pre;
-    always @(posedge clk) begin
-        enable_shift_register_pre <= enable_shift_register;
-    end
-    always @(negedge clk) begin
-        if(statetransition)
-            if(curr_state_pre == RCV_DATA_ST || curr_state_pre == SND_DATA_ST) begin
-                enable_shift_register <= 1;
-            end
-            else begin
-                enable_shift_register <= 0;
-            end
-        else begin
-            enable_shift_register <= enable_shift_register_pre;
-        end
-    end
-
-    /* enable write */
-    always @(posedge clk) begin
-        enable_write_pre <= enable_write;
-    end
-    always @(negedge clk or negedge reset_in) begin
-        if(~reset_in) begin
-            enable_write <= 0;
-        end
-        else begin
-            if(statetransition)
-                if(curr_state_pre == SND_DATA_ST) begin
-                    enable_write <= 1;
-                end
-                else begin
-                    enable_write <= 0;
-                end
-            else begin
-                enable_write <= enable_write_pre;
-            end
-        end
-    end
-
     /* reset counter */
-    assign reset_count_out = !(statetransition && (curr_state == ACK_CMD_ST));
+    assign reset_count_out = !(statetransition && ((curr_state_pre == RECEIVE_DATA_ST) | (curr_state_pre == SEND_DATA_ST)));
 
     /* update shift register */
     always @(posedge clk) begin
@@ -113,51 +97,23 @@ module serial_ctrl
         end
     end
 
-    /* register for saving incoming command */
-    reg [`CMD_LEN - 1:0] cmd_reg_pre;
-    reg [`CMD_LEN - 1:0] cmd_reg;
+    // register for saving incoming command
+    reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg; // -1: last bit is not stored
+    reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg_pre;
     always @ (negedge clk) begin
-        cmd_reg_pre <= cmd_reg;
+        cmd_reg <= cmd_reg_pre;
     end
     always @(posedge clk) begin
-        cmd_reg <= (cmd_reg_pre << 1) | data_inout;
-    end
-
-    /* command counter */
-    reg unsigned [$clog2(`CMD_LEN + `ACK_LEN):0] cmd_count_pre;
-    reg unsigned [$clog2(`CMD_LEN + `ACK_LEN):0] cmd_count;
-    always @ (negedge clk) begin
-        if(curr_state_pre == IDLE_ST) begin
-            cmd_count_pre <= 0;
+        if(curr_state == SKIP_STOP_ST) begin
+            cmd_reg_pre <= 0;
         end
         else begin
-            cmd_count_pre <= cmd_count + 1;
+            cmd_reg_pre <= (cmd_reg << 1) | data_inout;
         end
     end
+
     always @(posedge clk) begin
-        cmd_count <= cmd_count_pre;
-    end
-
-    /* update state, synchronize reset */
-    reg syncreset1, syncreset2;
-    always @(posedge clk or negedge reset_in) begin
-        if(~reset_in) begin
-            syncreset1 <= 1'b0;
-        end
-        else begin
-            syncreset1 <= 1'b1;
-        end
-    end
-    always @(negedge clk or negedge reset_in) begin
-        if(~reset_in) begin
-            syncreset2 <= 1'b0;
-        end
-        else begin
-            syncreset2 <= syncreset1;
-        end
-    end
-    always @(posedge clk, negedge syncreset2) begin
-        if(!syncreset2) begin
+        if(rst_reg == 0) begin
             curr_state_pre <= RESET_ST;
         end
         else begin
@@ -165,42 +121,17 @@ module serial_ctrl
                 RESET_ST : begin
                      curr_state_pre <= RESET_REGISTER_ST;
                 end
-                RECOVER_ST : begin
-                     curr_state_pre <= IDLE_ST;
-                end
-                IDLE_ST : begin
-                    if(data_inout) begin
-                        curr_state_pre <= RCV_CMD_ST;
-                    end
-                    else begin
-                        curr_state_pre <= IDLE_ST;
-                    end
-                end
-                UPDATE_ST: begin
-                    curr_state_pre <= IDLE_ST;
-                end
-                RESET_REGISTER_ST: begin
-                    curr_state_pre <= IDLE_ST;
-                end
-                RCV_CMD_ST : begin // get command after start bit
-                    if(cmd_count_pre < `CMD_LEN) begin
-                        curr_state_pre <= RCV_CMD_ST;
-                    end
-                    else begin
-                        curr_state_pre <= ACK_CMD_ST;
-                    end
-                end
-                ACK_CMD_ST : begin
-                    if(cmd_count_pre < `CMD_LEN + `ACK_LEN) begin
-                        curr_state_pre <= ACK_CMD_ST;
-                    end
-                    else begin
-                        case (cmd_reg)
-                            START_SND_CMD: begin
-                                curr_state_pre <= SND_DATA_ST;
+                SKIP_STOP_ST: begin
+                     curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                 end
+                WAIT_FOR_COMMAND_ST : begin
+                    if(cmd_reg[`CMD_LEN - 1 + `START_LEN - 1:`CMD_LEN - 1] == `START_BIT_PATTERN) begin
+                        case ((cmd_reg[`CMD_LEN - 2:0] << 1) | data_inout) // last bit of command is not stored, this saves one cycle
+                            START_SEND_CMD: begin
+                                curr_state_pre <= SEND_DATA_SETUP_ST;
                             end
-                            START_RCV_CMD: begin
-                                curr_state_pre <= RCV_DATA_ST;
+                            START_RECEIVE_CMD: begin
+                                curr_state_pre <= RECEIVE_DATA_ST;
                             end
                             RESET_CMD: begin
                                 curr_state_pre <= RESET_REGISTER_ST;
@@ -210,21 +141,36 @@ module serial_ctrl
                             end
                         endcase
                     end
-                end
-                SND_DATA_ST: begin
-                    if (count_reached_in) begin
-                        curr_state_pre <= RECOVER_ST;
-                    end
                     else begin
-                        curr_state_pre <= SND_DATA_ST;
+                        curr_state_pre <= WAIT_FOR_COMMAND_ST;
                     end
                 end
-                RCV_DATA_ST: begin
+                UPDATE_ST: begin
+                    curr_state_pre <= SKIP_STOP_ST;
+                end
+                RESET_REGISTER_ST: begin
+                    curr_state_pre <= SKIP_STOP_ST;
+                end
+                SEND_DATA_SETUP_ST: begin
+                    curr_state_pre <= SEND_DATA_ST;
+                end
+                SEND_DATA_ST: begin
                     if (count_reached_in) begin
-                        curr_state_pre <= IDLE_ST;
+                        curr_state_pre <= SEND_DATA_RECOVER_ST;
                     end
                     else begin
-                        curr_state_pre <= RCV_DATA_ST;
+                        curr_state_pre <= SEND_DATA_ST;
+                    end
+                end
+                SEND_DATA_RECOVER_ST : begin
+                    curr_state_pre <= SKIP_STOP_ST;
+                end
+                RECEIVE_DATA_ST: begin
+                    if (count_reached_in) begin
+                        curr_state_pre <= SKIP_STOP_ST;
+                    end
+                    else begin
+                        curr_state_pre <= RECEIVE_DATA_ST;
                     end
                 end
             endcase

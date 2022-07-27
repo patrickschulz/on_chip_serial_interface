@@ -15,16 +15,16 @@ reg [`BIT_COUNT_LEN - 1:0] count_pre;
 assign count_reached_out = (count_pre == 2**`BIT_COUNT_LEN - `DATA_LEN);
 
 always @(negedge clk) begin
-    count_pre <= count - 1;
+    if (!reset_in) begin
+        count_pre <= 2**`BIT_COUNT_LEN - 1;
+    end
+    else begin
+        count_pre <= count - 1;
+    end
 end
 
 always @(posedge clk) begin
-    if (!reset_in) begin
-        count <= 2**`BIT_COUNT_LEN;
-    end
-    else begin
-        count <= count_pre;
-    end
+    count <= count_pre;
 end
 
 endmodule

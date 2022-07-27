@@ -3,14 +3,14 @@
 `define UPPER_LIMIT 2 ** `DATA_LEN - 1
 
 `define IDLE_CYCLES 0
-`define CYCLE_BREAK 8
+`define CYCLE_BREAK 0
 
 module testbench;
     localparam
-        RESET_CMD      = 2'b00, // reset internal state
-        START_SND_CMD  = 2'b01, // start transmission of saved data
-        START_RCV_CMD  = 2'b10, // start receiving of data
-        UPDATE_CMD     = 2'b11; // update the shift registers output cells
+        RESET_CMD      = 3'b000, // reset internal state
+        START_SND_CMD  = 3'b010, // start transmission of saved data
+        START_RCV_CMD  = 3'b100, // start receiving of data
+        UPDATE_CMD     = 3'b110; // update the shift registers output cells
     // general settings
     //timeunit 1ns/1ps;
     initial begin
@@ -28,15 +28,12 @@ module testbench;
     reg [0:`DATA_LEN - 1] test_data;
     reg [0:`DATA_LEN - 1] test_data_out;
 
-    reg reset = 1;
-
-    assign data_inout = (write_not_read == 1'b1) ? data_in : 1'bZ;
+    assign (supply0, supply1) data_inout = (write_not_read == 1'b1) ? data_in : 1'bZ;
 
     // place serial interface DUT
     serial_interface serial_interface(
       .clk(clk),
       .data_inout(data_inout),
-      .reset_in(reset),
       .bit_out(bit_out)
     );
 
@@ -50,8 +47,17 @@ module testbench;
         `endif
     endtask
 
+    task send_stop_bit;
+        @(negedge clk);
+        data_in <= 1'b0;
+    endtask
+
     task send_command(reg [`CMD_LEN - 1:0] cmd);
-        // send start bit
+        // send start bits
+        @(negedge clk);
+        data_in <= 1'b1;
+        @(negedge clk);
+        data_in <= 1'b0;
         @(negedge clk);
         data_in <= 1'b1;
 
@@ -63,8 +69,6 @@ module testbench;
                 $display("wrote command bit %b at %0t", cmd[i], $time);
             `endif 
         end
-        @(negedge clk);
-        data_in <= 1'b0;
 
         `ifdef DEBUG_LEVEL
             $display("time is %0t after command", $time);
@@ -81,8 +85,6 @@ module testbench;
                 $display("wrote data bit %b at %0t", data[i], $time);
             `endif
         end
-        @(negedge clk);
-        data_in <= 1'b0; 
         `ifdef DEBUG_LEVEL
             $display("time is %0t after data", $time);
         `endif
@@ -93,12 +95,6 @@ module testbench;
         data_in <= 1'b0;
         write_not_read = 1'b1;    
 
-        // reset
-        #5 reset = 0;
-        #15 reset = 1;
-
-        #75;
-
         `ifdef DEBUG_LEVEL
             $monitor("data_in = %b", data_in);
             $monitor("ser_ctrl_cmd_reg = %b", serial_interface.cmd_reg);
@@ -108,26 +104,39 @@ module testbench;
             assert (serial_interface.curr_state == RESET_ST) else $error("fehler reset at %0t", $time);
         `endif
 
+        // force reset of internal circuitry (NOT reset command, which resets the data registers)
+        write_not_read = 1'b1; 
+        data_in <= 1'b0;
+        wait_n_clk_cycles(4);
+        data_in <= 1'b1;
+        wait_n_clk_cycles(2 * `DATA_LEN);
+        data_in <= 1'b0;
+
+        // wait for reset
+        wait_n_clk_cycles(2);
+
         // loop to try all possible values that can be stored in the daisychain
         for (int j = `LOWER_LIMIT; j <= `UPPER_LIMIT; j++) begin
             test_data = j;
 
             send_command(START_RCV_CMD);
             send_data(test_data);
+            send_stop_bit();
             wait_n_clk_cycles(`IDLE_CYCLES);
 
             send_command(UPDATE_CMD);
-            wait_n_clk_cycles(1); // wait for update
+            send_stop_bit();
             wait_n_clk_cycles(`IDLE_CYCLES);
 
-            `ifdef DEBUG_LEVEL
-                assert (serial_interface.curr_state == UPDATE_ST) else $error("fehler update at %0t", $time);
-            `endif
+            //`ifdef DEBUG_LEVEL
+            //    assert (serial_interface.curr_state == UPDATE_ST) else $error("fehler update at %0t", $time);
+            //`endif
 
-            wait_n_clk_cycles(1); // wait until data is ready
+            wait_n_clk_cycles(2); // wait until data is ready (takes two cycles after command)
             assert (bit_out == test_data) else $error("bit out %b bei %b", bit_out, test_data);
 
             send_command(START_SND_CMD);
+            @(negedge clk);
             write_not_read = 1'b0; 
             // receive data
             @(posedge clk); // skip acknowledge phase
@@ -146,10 +155,12 @@ module testbench;
             wait_n_clk_cycles(`CYCLE_BREAK);
         end
 
-        // test reset
-        send_command(RESET_CMD);
-        wait_n_clk_cycles(2); // wait for reset
-        wait_n_clk_cycles(`IDLE_CYCLES);
+        wait_n_clk_cycles(10);
+
+        //// test reset
+        //send_command(RESET_CMD);
+        //wait_n_clk_cycles(2); // wait for reset
+        //wait_n_clk_cycles(`IDLE_CYCLES);
 
         $finish;
     end
