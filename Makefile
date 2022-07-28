@@ -33,16 +33,14 @@ waveforms:
 .PHONY: check
 check:
 	for source in $(sources); do printf "read_verilog %s\n" "$$source" >> synthesize; done
-	for source in $(blackboxsources); do printf "read_verilog -lib %s\n" "$$source" >> synthesize; done
 	echo synth -top serial_interface >> synthesize
 	echo stat >> synthesize
 	yosys -s synthesize
 	rm synthesize
 
-serial_interface_synthesized.v: $(sources) $(blackboxsources)
+serial_interface_synthesized.v: $(sources)
 	rm -f synthesize
 	for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> synthesize; done
-	for source in $(blackboxsources); do printf "read_verilog -lib %s\n" "$$source" >> synthesize; done
 	echo read_liberty -lib $(stdlib).lib >> synthesize
 	echo synth -top serial_interface >> synthesize
 	echo dfflibmap -liberty $(stdlib).lib >> synthesize

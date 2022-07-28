@@ -34,7 +34,7 @@ module register_cell
     end
     
     /* flip flop update */
-    always @(posedge update or negedge reset) begin
+    always @(posedge update) begin
         if (!reset) begin
             bit_out <= 0; // or 1, depending on the needed circuit configuration
         end

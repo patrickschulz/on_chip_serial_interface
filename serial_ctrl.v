@@ -20,28 +20,31 @@ module serial_ctrl
         .EN(enable_write)
     );
 
-    // the maximum number of allowed consecutive 1s is DATA_LEN, since every
-    // command ends with a zero and there is a zero stop bit after
-    // commands/data transmissions
-    // This means that if the controller sends out more than DATA_LEN 1s, this
-    // means that the circuit should be reset
-    reg [`BIT_COUNT_LEN - 1:0] rst_reg, rst_reg_pre;
+    // the maximum number of allowed consecutive 1s is DATA_LEN, since the
+    // data are surrounded by 0s (every command ends with 0 and there is a 0 stop bit after commands/data)
+    // This means that if the controller sends out more than DATA_LEN 1s, this means that the circuit should be reset
+    // HOWEVER: in extreme cases of a very low value of DATA_LEN,
+    // the start pattern together with the command can produce more (legal) 1s: 101 + 110 -> 3 consecutive 1s
+    // with the current settings for START_BIT_PATTERN and the command coding,
+    // this only happens for DATA_LEN < 3
+    // easiest fix is to spend one bit more than needed
+    // FIXME: figure out the actual required bits
+    reg [`BIT_COUNT_LEN:0] rst_reg, rst_reg_pre;
     always @(negedge clk) begin
         rst_reg <= rst_reg_pre;
     end
     always @(posedge clk) begin
-        if(data_inout) begin
-            rst_reg_pre <= rst_reg - 1;
+        if(~data_inout) begin
+            rst_reg_pre <= 2**(`BIT_COUNT_LEN + 1) - 1;
         end
         else begin
-            rst_reg_pre <= 2**`BIT_COUNT_LEN - 1;
+            rst_reg_pre <= rst_reg - 1;
         end
     end
 
     reg reset_shift_reg_out;
     wire enable_shift_register;
     assign enable_shift_register = (curr_state == RECEIVE_DATA_ST) | (curr_state == SEND_DATA_ST);
-    reg update_shift_reg_out;
 
     wire write_shift_register;
     assign write_shift_register = (curr_state == RECEIVE_DATA_ST);
@@ -74,22 +77,17 @@ module serial_ctrl
     wire statetransition;
     assign statetransition = curr_state_pre != curr_state_post;
 
-    /* reset shift register (can't be a simple assign to stay ahead of glitches during state transitions) */
-    always @(negedge clk) begin
-        if(curr_state_pre == RESET_REGISTER_ST) begin
-            reset_shift_reg_out <= 1'b0;
-        end
-        else begin
-            reset_shift_reg_out <= 1'b1;
-        end
-    end
+    // reset shift register (synchronous reset, triggered by the update signal)
+    assign reset_shift_reg_out = !(curr_state == RESET_REGISTER_ST);
 
-    /* reset counter */
-    assign reset_count_out = !(statetransition && ((curr_state_pre == RECEIVE_DATA_ST) | (curr_state_pre == SEND_DATA_ST)));
-
-    /* update shift register */
+    // update shift register
+    // uses the clock input of the corresponding DFF
+    // therefore, this can't be a simply assign as glitches must be avoided
+    // FIXME: code states so that this can be a simple assign
+    reg update_shift_reg_out;
+    //assign update_shift_reg_out = ((curr_state_post == UPDATE_ST) || (curr_state_post == RESET_REGISTER_ST));
     always @(posedge clk) begin
-        if(curr_state == UPDATE_ST) begin
+        if((curr_state == UPDATE_ST) || (curr_state == RESET_REGISTER_ST)) begin
             update_shift_reg_out <= 1'b1;
         end
         else begin
@@ -97,8 +95,11 @@ module serial_ctrl
         end
     end
 
+    // reset counter
+    assign reset_count_out = !(statetransition && ((curr_state_pre == RECEIVE_DATA_ST) | (curr_state_pre == SEND_DATA_ST)));
+
     // register for saving incoming command
-    reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg; // -1: last bit is not stored
+    reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg; // extra -1: last bit is not stored
     reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg_pre;
     always @ (negedge clk) begin
         cmd_reg <= cmd_reg_pre;

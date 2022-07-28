@@ -109,7 +109,7 @@ module testbench;
         data_in <= 1'b0;
         wait_n_clk_cycles(4);
         data_in <= 1'b1;
-        wait_n_clk_cycles(2 * `DATA_LEN);
+        wait_n_clk_cycles(4 * `DATA_LEN);
         data_in <= 1'b0;
 
         // wait for reset
