@@ -28,7 +28,7 @@ simulate_synth: synth
 
 .PHONY: waveforms
 waveforms:
-	gtkwave -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd &
+	gtkwave -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
 .PHONY: check
 check:

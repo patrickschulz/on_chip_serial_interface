@@ -1,24 +1,18 @@
 module serial_ctrl
 (
-    /* external ports */
-    inout data_inout,
     input clk,
-    /* module ports */
+    input data_in,
+    output write,
     input count_reached_in,
     input data_out_shift_reg_in,
     output reset_count_out,
-    output update_shift_reg_out,
+    output update,
     output reset_shift_reg_out,
     output enable_shift_register,
     output write_shift_register
 );
-    wire enable_write;
-    assign enable_write = (curr_state == SEND_DATA_ST);
-    tbuf bidir_data_buffer(
-        .I(data_out_shift_reg_in),
-        .O(data_inout),
-        .EN(enable_write)
-    );
+    wire write;
+    assign write = (curr_state == SEND_DATA_ST);
 
     // the maximum number of allowed consecutive 1s is DATA_LEN, since the
     // data are surrounded by 0s (every command ends with 0 and there is a 0 stop bit after commands/data)
@@ -34,7 +28,7 @@ module serial_ctrl
         rst_reg <= rst_reg_pre;
     end
     always @(posedge clk) begin
-        if(~data_inout) begin
+        if(~data_in) begin
             rst_reg_pre <= 2**(`BIT_COUNT_LEN + 1) - 1;
         end
         else begin
@@ -84,14 +78,14 @@ module serial_ctrl
     // uses the clock input of the corresponding DFF
     // therefore, this can't be a simply assign as glitches must be avoided
     // FIXME: code states so that this can be a simple assign
-    reg update_shift_reg_out;
+    reg update;
     //assign update_shift_reg_out = ((curr_state_post == UPDATE_ST) || (curr_state_post == RESET_REGISTER_ST));
     always @(posedge clk) begin
         if((curr_state == UPDATE_ST) || (curr_state == RESET_REGISTER_ST)) begin
-            update_shift_reg_out <= 1'b1;
+            update <= 1'b1;
         end
         else begin
-            update_shift_reg_out <= 1'b0;
+            update <= 1'b0;
         end
     end
 
@@ -109,7 +103,7 @@ module serial_ctrl
             cmd_reg_pre <= 0;
         end
         else begin
-            cmd_reg_pre <= (cmd_reg << 1) | data_inout;
+            cmd_reg_pre <= (cmd_reg << 1) | data_in;
         end
     end
 
@@ -127,7 +121,7 @@ module serial_ctrl
                  end
                 WAIT_FOR_COMMAND_ST : begin
                     if(cmd_reg[`CMD_LEN - 1 + `START_LEN - 1:`CMD_LEN - 1] == `START_BIT_PATTERN) begin
-                        case ((cmd_reg[`CMD_LEN - 2:0] << 1) | data_inout) // last bit of command is not stored, this saves one cycle
+                        case ((cmd_reg[`CMD_LEN - 2:0] << 1) | data_in) // last bit of command is not stored, this saves one cycle
                             START_SEND_CMD: begin
                                 curr_state_pre <= SEND_DATA_SETUP_ST;
                             end

@@ -29,6 +29,7 @@ module testbench;
     reg [0:`DATA_LEN - 1] test_data_out;
 
     assign (supply0, supply1) data_inout = (write_not_read == 1'b1) ? data_in : 1'bZ;
+    pulldown(data_inout);
 
     // place serial interface DUT
     serial_interface serial_interface(
