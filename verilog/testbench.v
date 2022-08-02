@@ -6,11 +6,6 @@
 `define CYCLE_BREAK 0
 
 module testbench;
-    localparam
-        RESET_CMD      = 3'b000, // reset internal state
-        START_SND_CMD  = 3'b010, // start transmission of saved data
-        START_RCV_CMD  = 3'b100, // start receiving of data
-        UPDATE_CMD     = 3'b110; // update the shift registers output cells
     // general settings
     //timeunit 1ns/1ps;
     initial begin
@@ -120,12 +115,12 @@ module testbench;
         for (int j = `LOWER_LIMIT; j <= `UPPER_LIMIT; j++) begin
             test_data = j;
 
-            send_command(START_RCV_CMD);
+            send_command(`START_RECEIVE_CMD);
             send_data(test_data);
             send_stop_bit();
             wait_n_clk_cycles(`IDLE_CYCLES);
 
-            send_command(UPDATE_CMD);
+            send_command(`UPDATE_CMD);
             send_stop_bit();
             wait_n_clk_cycles(`IDLE_CYCLES);
 
@@ -136,7 +131,7 @@ module testbench;
             wait_n_clk_cycles(2); // wait until data is ready (takes two cycles after command)
             assert (bit_out == test_data) else $error("bit out %b bei %b", bit_out, test_data);
 
-            send_command(START_SND_CMD);
+            send_command(`START_SEND_CMD);
             @(negedge clk);
             write_not_read = 1'b0; 
             // receive data
@@ -159,7 +154,7 @@ module testbench;
         wait_n_clk_cycles(10);
 
         //// test reset
-        //send_command(RESET_CMD);
+        //send_command(`RESET_CMD);
         //wait_n_clk_cycles(2); // wait for reset
         //wait_n_clk_cycles(`IDLE_CYCLES);
 

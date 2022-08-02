@@ -55,15 +55,6 @@ module serial_ctrl
         SEND_DATA_RECOVER_ST = 4'b0111,  // recover from write/read shift to prevent glitches
         SEND_DATA_ST         = 4'b1000;  // sending data
 
-    // command types to be received from the external controller
-    // all commands end with a zero bit
-    // this ensures that the line is pulled down after a command
-    localparam
-        RESET_CMD         = 3'b000, // reset internal state
-        START_SEND_CMD    = 3'b010, // start transmission of saved data
-        START_RECEIVE_CMD = 3'b100, // start receiving of data
-        UPDATE_CMD        = 3'b110; // update the shift registers output cells
-
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
     reg [3:0] curr_state_post; // changes with posedge
@@ -122,16 +113,16 @@ module serial_ctrl
                 WAIT_FOR_COMMAND_ST : begin
                     if(cmd_reg[`CMD_LEN - 1 + `START_LEN - 1:`CMD_LEN - 1] == `START_BIT_PATTERN) begin
                         case ((cmd_reg[`CMD_LEN - 2:0] << 1) | data_in) // last bit of command is not stored, this saves one cycle
-                            START_SEND_CMD: begin
+                            `START_SEND_CMD: begin
                                 curr_state_pre <= SEND_DATA_SETUP_ST;
                             end
-                            START_RECEIVE_CMD: begin
+                            `START_RECEIVE_CMD: begin
                                 curr_state_pre <= RECEIVE_DATA_ST;
                             end
-                            RESET_CMD: begin
+                            `RESET_CMD: begin
                                 curr_state_pre <= RESET_REGISTER_ST;
                             end
-                            UPDATE_CMD: begin
+                            `UPDATE_CMD: begin
                                 curr_state_pre <= UPDATE_ST;
                             end
                         endcase
