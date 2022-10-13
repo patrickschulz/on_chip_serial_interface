@@ -15,33 +15,30 @@ module serial_ctrl
     wire write;
     assign write = (curr_state == SEND_DATA_ST);
 
-    reg reset_shift_reg_out;
-    wire enable_shift_register;
-    assign enable_shift_register = (curr_state == RECEIVE_DATA_ST) | (curr_state == SEND_DATA_ST);
-
     wire write_shift_register;
     assign write_shift_register = (curr_state == RECEIVE_DATA_ST);
 
+    wire enable_shift_register;
+    assign enable_shift_register = write || write_shift_register;
+
     // control part state machine
+    // states are coded in order to minimize instance count
     localparam 
-        RESET_ST             = 4'b0000,  // reset control circuit
-        SKIP_STOP_ST         = 4'b0001,  // skip stop bit
+        RESET_ST             = 4'b1xxx,  // reset control circuit
+        SKIP_STOP_ST         = 4'b0100,  // skip stop bit
+        UPDATE_ST            = 4'b0101,  // update shift register
+        RESET_REGISTER_ST    = 4'b0110,  // reset shift register
         WAIT_FOR_COMMAND_ST  = 4'b0010,  // wait for command
-        UPDATE_ST            = 4'b0011,  // update shift register
-        RESET_REGISTER_ST    = 4'b0100,  // reset shift register
-        RECEIVE_DATA_ST      = 4'b0101,  // receiving data
-        SEND_DATA_SETUP_ST   = 4'b0110,  // sending data, setup tristate buffer
+        RECEIVE_DATA_ST      = 4'b0000,  // receiving data
+        SEND_DATA_SETUP_ST   = 4'b0011,  // sending data, setup tristate buffer
         SEND_DATA_RECOVER_ST = 4'b0111,  // recover from write/read shift to prevent glitches
-        SEND_DATA_ST         = 4'b1000;  // sending data
+        SEND_DATA_ST         = 4'b0001;  // sending data
 
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
-    reg [3:0] curr_state_post; // changes with posedge
-
-    wire statetransition;
-    assign statetransition = curr_state_pre != curr_state_post;
 
     // reset shift register (synchronous reset, triggered by the update signal)
+    wire reset_shift_reg_out;
     assign reset_shift_reg_out = !(curr_state == RESET_REGISTER_ST);
 
     // update shift register
@@ -49,7 +46,6 @@ module serial_ctrl
     // therefore, this can't be a simply assign as glitches must be avoided
     // FIXME: code states so that this can be a simple assign
     reg update;
-    //assign update_shift_reg_out = ((curr_state_post == UPDATE_ST) || (curr_state_post == RESET_REGISTER_ST));
     always @(posedge clk) begin
         if((curr_state == UPDATE_ST) || (curr_state == RESET_REGISTER_ST)) begin
             update <= 1'b1;
@@ -60,7 +56,7 @@ module serial_ctrl
     end
 
     // reset counter
-    assign reset_count_out = !(statetransition && ((curr_state_pre == RECEIVE_DATA_ST) | (curr_state_pre == SEND_DATA_ST)));
+    assign reset_count_out = (curr_state_pre == RECEIVE_DATA_ST) || (curr_state_pre == SEND_DATA_ST);
 
     // register for saving incoming command
     reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg; // extra -1: last bit is not stored
@@ -143,8 +139,5 @@ module serial_ctrl
     end
     always @(negedge clk) begin
         curr_state <= curr_state_pre;
-    end
-    always @(posedge clk) begin
-        curr_state_post <= curr_state;
     end
 endmodule
