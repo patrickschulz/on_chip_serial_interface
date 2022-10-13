@@ -25,14 +25,14 @@ module serial_ctrl
     // states are coded in order to minimize instance count
     localparam 
         RESET_ST             = 4'b1xxx,  // reset control circuit
+        RECEIVE_DATA_ST      = 4'b0000,  // receiving data
+        SEND_DATA_ST         = 4'b0001,  // sending data
+        WAIT_FOR_COMMAND_ST  = 4'b0010,  // wait for command
+        SEND_DATA_SETUP_ST   = 4'b0011,  // sending data, setup tristate buffer
         SKIP_STOP_ST         = 4'b0100,  // skip stop bit
         UPDATE_ST            = 4'b0101,  // update shift register
         RESET_REGISTER_ST    = 4'b0110,  // reset shift register
-        WAIT_FOR_COMMAND_ST  = 4'b0010,  // wait for command
-        RECEIVE_DATA_ST      = 4'b0000,  // receiving data
-        SEND_DATA_SETUP_ST   = 4'b0011,  // sending data, setup tristate buffer
-        SEND_DATA_RECOVER_ST = 4'b0111,  // recover from write/read shift to prevent glitches
-        SEND_DATA_ST         = 4'b0001;  // sending data
+        SEND_DATA_RECOVER_ST = 4'b0111;  // recover from write/read shift to prevent glitches
 
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
