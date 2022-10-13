@@ -31,17 +31,11 @@ simulate_synth: synth
 waveforms:
 	gtkwave -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
-.PHONY: check
-check:
-	for source in $(sources); do printf "read_verilog %s\n" "$$source" >> synthesize; done
-	echo synth -top serial_interface >> synthesize
-	echo stat >> synthesize
-	yosys -s synthesize
-	rm synthesize
-
-serial_interface_synthesized.v: $(sources)
-	rm -f synthesize
+serial_interface_synthesized.v: $(sources) $(gatelevelsources)
+	echo "# RTL sources" > synthesize;
 	for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> synthesize; done
+	echo "# gate-level sources" >> synthesize;
+	for source in $(gatelevelsources); do printf "read_verilog -sv %s\n" "$$source" >> synthesize; done
 	echo read_liberty -lib $(stdlib).lib >> synthesize
 	echo synth -top serial_interface >> synthesize
 	echo dfflibmap -liberty $(stdlib).lib >> synthesize
