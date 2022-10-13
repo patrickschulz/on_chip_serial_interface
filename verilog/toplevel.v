@@ -14,6 +14,8 @@ wire update;
 wire reset_shift_register;
 wire enable_shift_register;
 wire data_out_shift_reg;
+wire write;
+wire write_shift_register;
 
 wire data_in;
 wire data_out;
