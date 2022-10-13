@@ -9,9 +9,10 @@ timing_script := timing.tcl
 .PHONY: all
 all:
 	@echo possible actions:
-	@echo " simulate"
-	@echo " synth"
-	@echo " timing"
+	@echo "  simulate"
+	@echo "  synth"
+	@echo "  timing"
+	@echo required tools are iverilog for simulation, yosys for synthesis and openSTA for timing analysis
 
 .PHONY: simulate
 simulate:
