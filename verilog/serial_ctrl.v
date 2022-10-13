@@ -5,6 +5,7 @@ module serial_ctrl
     output write,
     input count_reached_in,
     input data_out_shift_reg_in,
+    input reset_internal,
     output reset_count_out,
     output update,
     output reset_shift_reg_out,
@@ -13,28 +14,6 @@ module serial_ctrl
 );
     wire write;
     assign write = (curr_state == SEND_DATA_ST);
-
-    // the maximum number of allowed consecutive 1s is DATA_LEN, since the
-    // data are surrounded by 0s (every command ends with 0 and there is a 0 stop bit after commands/data)
-    // This means that if the controller sends out more than DATA_LEN 1s, this means that the circuit should be reset
-    // HOWEVER: in extreme cases of a very low value of DATA_LEN,
-    // the start pattern together with the command can produce more (legal) 1s: 101 + 110 -> 3 consecutive 1s
-    // with the current settings for START_BIT_PATTERN and the command coding,
-    // this only happens for DATA_LEN < 3
-    // easiest fix is to spend one bit more than needed
-    // FIXME: figure out the actual required bits
-    reg [`BIT_COUNT_LEN:0] rst_reg, rst_reg_pre;
-    always @(negedge clk) begin
-        rst_reg <= rst_reg_pre;
-    end
-    always @(posedge clk) begin
-        if(~data_in) begin
-            rst_reg_pre <= 2**(`BIT_COUNT_LEN + 1) - 1;
-        end
-        else begin
-            rst_reg_pre <= rst_reg - 1;
-        end
-    end
 
     reg reset_shift_reg_out;
     wire enable_shift_register;
@@ -99,7 +78,7 @@ module serial_ctrl
     end
 
     always @(posedge clk) begin
-        if(rst_reg == 0) begin
+        if(reset_internal == 1) begin
             curr_state_pre <= RESET_ST;
         end
         else begin

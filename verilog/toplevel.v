@@ -6,8 +6,9 @@ module serial_interface
     /* on-chip ports */
     output [`DATA_LEN - 1:0] bit_out
 );
-wire reset_counter;
+wire reset_data_counter;
 wire count_reached;
+wire reset_internal;
 
 wire update;
 wire reset_shift_register;
@@ -29,17 +30,24 @@ serial_ctrl control (
     .data_in(data_in),
     .write(write),
     .count_reached_in(count_reached),
-    .reset_count_out(reset_counter),
+    .reset_internal(reset_internal),
+    .reset_count_out(reset_data_counter),
     .update(update),
     .reset_shift_reg_out(reset_shift_register),
     .enable_shift_register(enable_shift_register),
     .write_shift_register(write_shift_register)
 );
 
-bit_counter counter (
+reset_counter reset_counter (
     .clk(clk),
-    .reset_in(reset_counter),
-    .count_reached_out(count_reached)
+    .data(data_in),
+    .reset(reset_internal)
+);
+
+data_counter data_counter (
+    .clk(clk),
+    .reset(reset_data_counter),
+    .count_reached(count_reached)
 );
 
 shift_register daisychain (
