@@ -12,15 +12,6 @@ module serial_ctrl
     output enable_shift_register,
     output write_shift_register
 );
-    wire write;
-    assign write = (curr_state == SEND_DATA_ST);
-
-    wire write_shift_register;
-    assign write_shift_register = (curr_state == RECEIVE_DATA_ST);
-
-    wire enable_shift_register;
-    assign enable_shift_register = write || write_shift_register;
-
     // control part state machine
     // states are coded in order to minimize instance count
     localparam 
@@ -36,6 +27,15 @@ module serial_ctrl
 
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
+
+    wire write;
+    assign write = (curr_state == SEND_DATA_ST);
+
+    wire write_shift_register;
+    assign write_shift_register = (curr_state == RECEIVE_DATA_ST);
+
+    wire enable_shift_register;
+    assign enable_shift_register = write || write_shift_register;
 
     // reset shift register (synchronous reset, triggered by the update signal)
     wire reset_shift_reg_out;
