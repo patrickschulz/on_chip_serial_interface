@@ -18,8 +18,6 @@ all:
 simulate:
 	@iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o design
 	@vvp design
-	@iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench_reset.v -o design
-	@vvp design
 	rm design
 
 .PHONY: simulate_synth
