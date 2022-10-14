@@ -1,4 +1,4 @@
-sources := config.v register_cell.v shift_register.v data_counter.v reset_counter.v serial_ctrl.v toplevel.v
+sources := config.v register_cell.v shift_register.v data_counter.v reset_counter.v serial_ctrl.v command_register.v toplevel.v
 gatelevelsources := down_counter.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
@@ -16,10 +16,10 @@ all:
 
 .PHONY: simulate
 simulate:
-	iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o design
-	vvp design
-	iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench_reset.v -o design
-	vvp design
+	@iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o design
+	@vvp design
+	@iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench_reset.v -o design
+	@vvp design
 	rm design
 
 .PHONY: simulate_synth

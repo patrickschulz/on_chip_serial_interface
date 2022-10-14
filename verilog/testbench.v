@@ -1,8 +1,10 @@
 //`define DEBUG_LEVEL
 `define LOWER_LIMIT 0
 `define UPPER_LIMIT 2 ** `DATA_LEN - 1
+//`define LOWER_LIMIT 1
+//`define UPPER_LIMIT 1
 
-`define IDLE_CYCLES 0
+`define IDLE_CYCLES 10
 `define CYCLE_BREAK 0
 
 module testbench;
@@ -44,13 +46,12 @@ module testbench;
     endtask
 
     task send_stop_bit;
-        @(negedge clk);
         data_in <= 1'b0;
+        @(negedge clk);
     endtask
 
     task send_command(reg [`CMD_LEN - 1:0] cmd);
         // send start bits
-        @(negedge clk);
         data_in <= 1'b1;
         @(negedge clk);
         data_in <= 1'b0;
@@ -65,6 +66,7 @@ module testbench;
                 $display("wrote command bit %b at %0t", cmd[i], $time);
             `endif 
         end
+        @(negedge clk);
 
         `ifdef DEBUG_LEVEL
             $display("time is %0t after command", $time);
@@ -73,14 +75,15 @@ module testbench;
 
     task send_data(reg [`DATA_LEN - 1 : 0] data);
         for(int i = 0; i < `DATA_LEN; i++) begin
-            @(negedge clk);
             data_in <= data[i];
+            @(negedge clk);
 
             `ifdef DEBUG_LEVEL
                 assert (serial_interface.curr_state == RCV_DATA_ST) else $error("fehler rcv state at %0t", $time);
                 $display("wrote data bit %b at %0t", data[i], $time);
             `endif
         end
+        data_in = 0;
         `ifdef DEBUG_LEVEL
             $display("time is %0t after data", $time);
         `endif
@@ -103,36 +106,32 @@ module testbench;
         // force reset of internal circuitry (NOT reset command, which resets the data registers)
         write_not_read = 1'b1; 
         data_in <= 1'b0;
-        wait_n_clk_cycles(4);
+        wait_n_clk_cycles(4 * `DATA_LEN);
         data_in <= 1'b1;
         wait_n_clk_cycles(4 * `DATA_LEN);
         data_in <= 1'b0;
 
         // wait for reset
-        wait_n_clk_cycles(2);
+        wait_n_clk_cycles(10);
 
         // loop to try all possible values that can be stored in the daisychain
-        for (int j = `LOWER_LIMIT; j <= `UPPER_LIMIT; j++) begin
-            test_data = j;
+        for (int i = `LOWER_LIMIT; i <= `UPPER_LIMIT; i++) begin
+            test_data = i;
 
             send_command(`START_RECEIVE_CMD);
-            send_data(test_data);
             send_stop_bit();
+            send_data(test_data);
             wait_n_clk_cycles(`IDLE_CYCLES);
 
             send_command(`UPDATE_CMD);
             send_stop_bit();
             wait_n_clk_cycles(`IDLE_CYCLES);
 
-            //`ifdef DEBUG_LEVEL
-            //    assert (serial_interface.curr_state == UPDATE_ST) else $error("fehler update at %0t", $time);
-            //`endif
-
             wait_n_clk_cycles(2); // wait until data is ready (takes two cycles after command)
             assert (bit_out == test_data) else $error("bit out %b bei %b", bit_out, test_data);
 
             send_command(`START_SEND_CMD);
-            @(negedge clk);
+            send_stop_bit();
             write_not_read = 1'b0; 
             // receive data
             @(posedge clk); // skip acknowledge phase

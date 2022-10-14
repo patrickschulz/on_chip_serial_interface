@@ -20,7 +20,6 @@ module serial_ctrl
         SEND_DATA_ST         = 4'b0001,  // sending data
         WAIT_FOR_COMMAND_ST  = 4'b0010,  // wait for command
         SEND_DATA_SETUP_ST   = 4'b0011,  // sending data, setup tristate buffer
-        SKIP_STOP_ST         = 4'b0100,  // skip stop bit
         UPDATE_ST            = 4'b0101,  // update shift register
         RESET_REGISTER_ST    = 4'b0110,  // reset shift register
         SEND_DATA_RECOVER_ST = 4'b0111;  // recover from write/read shift to prevent glitches
@@ -58,20 +57,12 @@ module serial_ctrl
     // reset counter
     assign reset_count_out = (curr_state_pre == RECEIVE_DATA_ST) || (curr_state_pre == SEND_DATA_ST);
 
-    // register for saving incoming command
-    reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg; // extra -1: last bit is not stored
-    reg [`CMD_LEN - 1 + `START_LEN - 1:0] cmd_reg_pre;
-    always @ (negedge clk) begin
-        cmd_reg <= cmd_reg_pre;
-    end
-    always @(posedge clk) begin
-        if(curr_state == SKIP_STOP_ST) begin
-            cmd_reg_pre <= 0;
-        end
-        else begin
-            cmd_reg_pre <= (cmd_reg << 1) | data_in;
-        end
-    end
+    // command register
+    wire receive_command;
+    assign receive_command = curr_state == WAIT_FOR_COMMAND_ST;
+    wire command_ready;
+    wire [`CMD_LEN - 1:0] command;
+    command_register command_register(.clk(clk), .data(data_in), .receive(receive_command), .ready(command_ready), .command(command));
 
     always @(posedge clk) begin
         if(reset_internal == 1) begin
@@ -80,14 +71,11 @@ module serial_ctrl
         else begin
             case (curr_state)
                 RESET_ST : begin
-                     curr_state_pre <= RESET_REGISTER_ST;
+                    curr_state_pre <= RESET_REGISTER_ST;
                 end
-                SKIP_STOP_ST: begin
-                     curr_state_pre <= WAIT_FOR_COMMAND_ST;
-                 end
                 WAIT_FOR_COMMAND_ST : begin
-                    if(cmd_reg[`CMD_LEN - 1 + `START_LEN - 1:`CMD_LEN - 1] == `START_BIT_PATTERN) begin
-                        case ((cmd_reg[`CMD_LEN - 2:0] << 1) | data_in) // last bit of command is not stored, this saves one cycle
+                    if(command_ready) begin
+                        case (command)
                             `START_SEND_CMD: begin
                                 curr_state_pre <= SEND_DATA_SETUP_ST;
                             end
@@ -107,10 +95,10 @@ module serial_ctrl
                     end
                 end
                 UPDATE_ST: begin
-                    curr_state_pre <= SKIP_STOP_ST;
+                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
                 end
                 RESET_REGISTER_ST: begin
-                    curr_state_pre <= SKIP_STOP_ST;
+                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
                 end
                 SEND_DATA_SETUP_ST: begin
                     curr_state_pre <= SEND_DATA_ST;
@@ -124,11 +112,11 @@ module serial_ctrl
                     end
                 end
                 SEND_DATA_RECOVER_ST : begin
-                    curr_state_pre <= SKIP_STOP_ST;
+                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
                 end
                 RECEIVE_DATA_ST: begin
                     if (count_reached_in) begin
-                        curr_state_pre <= SKIP_STOP_ST;
+                        curr_state_pre <= WAIT_FOR_COMMAND_ST;
                     end
                     else begin
                         curr_state_pre <= RECEIVE_DATA_ST;
