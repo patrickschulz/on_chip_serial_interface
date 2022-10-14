@@ -13,7 +13,7 @@ module reset_counter
     // this only happens for DATA_LEN < 3
     // easiest fix is to spend one bit more than needed
     // FIXME: figure out the actual required bits
-    wire [`BIT_COUNT_LEN:0] count;
-    down_counter #(.N(`BIT_COUNT_LEN + 1)) down_counter(.clk(clk), .reset(data), .out(count));
-    assign reset = count == 0;
+    wire [`RESET_LEN - 1:0] count;
+    down_counter #(.N(`RESET_LEN)) down_counter(.clk(clk), .reset(data), .out(count));
+    assign reset = !count[`RESET_LEN - 1];
 endmodule

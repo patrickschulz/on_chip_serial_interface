@@ -4,7 +4,7 @@
 //`define LOWER_LIMIT 1
 //`define UPPER_LIMIT 1
 
-`define IDLE_CYCLES 10
+`define IDLE_CYCLES 0
 `define CYCLE_BREAK 0
 
 module testbench;
@@ -106,9 +106,9 @@ module testbench;
         // force reset of internal circuitry (NOT reset command, which resets the data registers)
         write_not_read = 1'b1; 
         data_in <= 1'b0;
-        wait_n_clk_cycles(4 * `DATA_LEN);
+        wait_n_clk_cycles(`RESET_NUMBITS);
         data_in <= 1'b1;
-        wait_n_clk_cycles(4 * `DATA_LEN);
+        wait_n_clk_cycles(`RESET_NUMBITS);
         data_in <= 1'b0;
 
         // wait for reset
