@@ -41,18 +41,8 @@ module serial_ctrl
     assign reset_shift_reg_out = !(curr_state == RESET_REGISTER_ST);
 
     // update shift register
-    // uses the clock input of the corresponding DFF
-    // therefore, this can't be a simply assign as glitches must be avoided
-    // FIXME: code states so that this can be a simple assign
-    reg update;
-    always @(posedge clk) begin
-        if((curr_state == UPDATE_ST) || (curr_state == RESET_REGISTER_ST)) begin
-            update <= 1'b1;
-        end
-        else begin
-            update <= 1'b0;
-        end
-    end
+    wire update;
+    assign update = (curr_state == UPDATE_ST) || (curr_state == RESET_REGISTER_ST);
 
     // reset counter
     assign reset_count_out = (curr_state_pre == RECEIVE_DATA_ST) || (curr_state_pre == SEND_DATA_ST);

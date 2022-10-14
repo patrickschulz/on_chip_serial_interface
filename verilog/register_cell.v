@@ -9,6 +9,7 @@ module register_cell(chain_in, update, clk, reset, enable, chain_out, bit_out);
   wire ff_in;
   input reset;
   input update;
+  wire update_clk;
   mux hold_write_mux (
     .B(chain_out),
     .A(chain_in),
@@ -20,8 +21,13 @@ module register_cell(chain_in, update, clk, reset, enable, chain_out, bit_out);
     .B(reset),
     .O(in_or_reset)
   );
+  and_gate clk_gate (
+    .A(clk),
+    .B(update),
+    .O(update_clk)
+  );
   dffpq dff_buf (
-    .CLK(update),
+    .CLK(update_clk),
     .D(in_or_reset),
     .Q(bit_out)
   );
