@@ -1,14 +1,14 @@
 /* shift register consisting of `DATA_LEN register_cells with data in and data out port */
 module shift_register
 (
-        input clk,
-        input data_in,
-        input update,
-        input reset,
-        input enable,
-        input write,
-        output data_out,
-        output [`DATA_LEN - 1:0] bit_out
+    input clk,
+    input data_in,
+    input update,
+    input reset,
+    input enable,
+    input write,
+    output data_out,
+    output [`DATA_LEN - 1:0] bit_out
 );
     wire clk;
     wire data_in;
