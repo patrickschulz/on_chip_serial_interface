@@ -1,3 +1,15 @@
+/*
+              |-----------------------------------------------------------------------|
+              |                                                                       |
+              |--MUX    pre[0:N]                      |-------XNOR                    |
+                 MUX -----------------DFFN  out[0:N]  |       XNOR------------DFFP    |
+    1'b1 --------MUX                  DFFN------------(---*-- XNOR            DFFP----| out_pre[0:N]
+                  |          clk o--->DFFN            |   |          clk o--->DFFP
+                  |                                   |   |-----OR
+      reset o-----|                                   |         OR--- carry[0:N]
+                          vss,carry[0:N-1] -----------*---------OR
+*/
+
 module down_counter(clk, reset, out);
     parameter N = 16;
     input clk;
@@ -13,13 +25,3 @@ module down_counter(clk, reset, out);
     mux mux[N - 1:0] (.A(out_pre), .B(1'b1), .SEL(reset), .O(pre));
     dffpq dffpq[N - 1:0] (.CLK(clk), .D(net0), .Q(out_pre));
 endmodule
-
-/*
-                                     |-------XNOR
-       pre[0:N] -----DFFP  out[0:N]  |       XNOR------------DFFN
-                     DFFP------------(---*-- XNOR            DFFN--- pre[0:N]
-            clk ---->DFFP            |   |          clk ---->DFFN
-                                     |   |-----OR
-                                     |         OR--- carry[0:N]
-         vss,carry[0:N-1] -----------*---------OR
-*/
