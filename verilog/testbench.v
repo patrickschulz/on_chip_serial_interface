@@ -1,8 +1,6 @@
 //`define DEBUG_LEVEL
 `define LOWER_LIMIT 0
 `define UPPER_LIMIT 2 ** `DATA_LEN - 1
-//`define LOWER_LIMIT 1
-//`define UPPER_LIMIT 1
 
 `define IDLE_CYCLES 0
 `define CYCLE_BREAK 0

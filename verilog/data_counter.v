@@ -2,17 +2,15 @@ module data_counter
 (
     input clk,
     input reset,
-    output count_reached
+    output data_ready
 );
 
 wire clk;
 wire reset;
-wire count_reached;
+wire data_ready;
 reg [`BIT_COUNT_LEN - 1:0] count;
 
-down_counter #(.N(`BIT_COUNT_LEN)) down_counter(.clk(clk), .reset(reset), .out(count));
-
-/* flag when given limit has been reached */
-assign count_reached = (count == 2**`BIT_COUNT_LEN - (`DATA_LEN + 1));
+down_counter #(.N(`BIT_COUNT_LEN)) down_counter(.clk(clk), .reset(reset), .outn(count));
+assign data_ready = (count == 2**`BIT_COUNT_LEN - `DATA_LEN);
 
 endmodule

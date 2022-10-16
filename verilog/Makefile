@@ -1,5 +1,5 @@
-sources := config.v register_cell.v shift_register.v data_counter.v reset_counter.v serial_ctrl.v command_register.v toplevel.v
-gatelevelsources := down_counter.v
+sources := config.v data_counter.v reset_counter.v serial_ctrl.v command_register.v toplevel.v
+gatelevelsources := register_cell.v shift_register.v down_counter.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
 

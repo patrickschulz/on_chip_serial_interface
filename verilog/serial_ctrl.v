@@ -3,10 +3,10 @@ module serial_ctrl
     input clk,
     input data_in,
     output write,
-    input count_reached_in,
+    input data_ready,
     input data_out_shift_reg_in,
     input reset_internal,
-    output reset_count_out,
+    output enable_data_counter,
     output update,
     output reset_shift_reg_out,
     output enable_shift_register,
@@ -45,7 +45,7 @@ module serial_ctrl
     assign update = (curr_state == UPDATE_ST) || (curr_state == RESET_REGISTER_ST);
 
     // reset counter
-    assign reset_count_out = (curr_state_pre == RECEIVE_DATA_ST) || (curr_state_pre == SEND_DATA_ST);
+    assign enable_data_counter = (curr_state == RECEIVE_DATA_ST) || (curr_state == SEND_DATA_ST);
 
     // command register
     wire receive_command;
@@ -55,7 +55,7 @@ module serial_ctrl
     command_register command_register(.clk(clk), .data(data_in), .receive(receive_command), .ready(command_ready), .command(command));
 
     always @(posedge clk) begin
-        if(reset_internal == 1) begin
+        if(reset_internal) begin
             curr_state_pre <= RESET_ST;
         end
         else begin
@@ -94,7 +94,7 @@ module serial_ctrl
                     curr_state_pre <= SEND_DATA_ST;
                 end
                 SEND_DATA_ST: begin
-                    if (count_reached_in) begin
+                    if (data_ready) begin
                         curr_state_pre <= SEND_DATA_RECOVER_ST;
                     end
                     else begin
@@ -105,7 +105,7 @@ module serial_ctrl
                     curr_state_pre <= WAIT_FOR_COMMAND_ST;
                 end
                 RECEIVE_DATA_ST: begin
-                    if (count_reached_in) begin
+                    if (data_ready) begin
                         curr_state_pre <= WAIT_FOR_COMMAND_ST;
                     end
                     else begin

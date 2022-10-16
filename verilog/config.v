@@ -17,10 +17,15 @@
 // every command ends with a zero stop bit
 // when 1...1 is sent as data, this data are surrounded by:
 // START SEQUENCE (101) + stop bit (0) + 1...1 + high value of next start pattern
-// !WITH THE CURRENT START SEQUENCE! this means that the longest legal consecutive
+// this means that !WITH THE CURRENT START SEQUENCE! the longest legal consecutive
 // sequence of ones is DATA_LEN + 1
-// the number of reset bits must be twice this and a power of two
-`define RESET_LEN $clog2(`DATA_LEN + 1) + 1
+// the number of reset bits must be the *next* power of two
+// (e.g. if DATA_LEN + 1 is 4, the number of reset bits must be 8!)
+// the following expression calculates this by adding one more (+2)
+// FIXME: for a very small DATA_LEN, the command length has to be considered
+// as well, as the command register needs to be flushed during the reset
+// this is important for the interfacing circuits
+`define RESET_LEN ($clog2(`DATA_LEN + 2) + 1)
 `define RESET_NUMBITS 2 ** `RESET_LEN
 
 // derived defines
