@@ -1,0 +1,22 @@
+\pgfkeys{
+    % general circuits options
+    /tikz/circuits/line width/.initial = 0.8pt,
+    /tikz/circuits/dot/radius/.initial = 0.05cm,
+    /tikz/dot/.style = {dotshape},
+    /tikz/circuits/port/radius/.initial = 0.05cm,
+    %/tikz/port/.style = {portshape}
+    /tikz/port/.style = {wire, draw=black, fill=white, circle, inner sep = 0cm, minimum size = 0.1cm}
+}
+
+\pgfdeclareshape{portshape}
+{
+    \saveddimen{\radius}{\pgf@x=\pgfkeysvalueof{/tikz/circuits/port/radius}}
+    \anchor{center}{\pgfpointorigin}
+    \backgroundpath{
+        \color{white}
+        \pgfsetstrokecolor{black}
+        \pgfsetlinewidth{\pgfkeysvalueof{/tikz/circuits/line width}}
+        \pgfpathcircle{\pgfpointorigin}{\radius}
+        \pgfusepath{fill, stroke}
+    }
+}

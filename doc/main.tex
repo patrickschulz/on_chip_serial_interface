@@ -1,0 +1,140 @@
+\documentclass[parskip=half]{scrartcl}
+
+\usepackage{fontspec, unicode-math}
+\setmainfont{Libertinus Serif}
+\setsansfont{Libertinus Sans}
+\setmathfont{Libertinus Math}
+
+\usepackage{tikz}
+\usetikzlibrary{
+    calc,
+    fit,
+    decorations,
+    decorations.markings,
+    decorations.shapes
+}
+\usepackage{tikz-timing}
+
+\usepackage{booktabs}
+
+\tikzset{
+    %
+}
+
+\title{On-Chip Serial Interface with Low Pin Count}
+\author{Patrick Kurth}
+\date{October 2022}
+
+\let\command=\texttt
+
+\begin{document}
+    \maketitle
+    \section{Overview}
+    This document describes the usage and the implementation of an on-chip serial interface with a low pin count.
+    The intended use of this interface is in circuits requiring some calibration/configuration while having high constraint on the available pads.
+    The original target was high-frequency circuits without packaging (wafer probing of bare dies) where only a handful of pads are available for
+    use. Therefore, the most important parameter of the data interface is low pin count.
+
+    The interface presented in this document is functionally implemented in verilog.
+    For the physical implementation, the project uses \emph{openPCells} to generate the required layout views.
+    The entire project is implemented with technology-independent standard cells.
+    Timing issues across technology nodes are solved by using a practically-hold-violation-free architecture.
+    This is achieved by alternating flip-flop clock polarities (a positively edge-triggered flip-flop only follows a negatively edge-triggered and
+    vice versa).
+    This roughly equalized the timing margins for both setup- and hold-violations.
+    Finally, by using a low-frequency clock these margins can be high enough for any technology node.
+    \section{Introduction}
+    \section{Interfacing Signals}
+    The top-level schematic of the serial interface is shown in figure~\ref{fig:blockdiagram}.
+    The interface has only two off-chip pins (clock and data).
+    VDD and VSS are of course also present but usually shared with other circuits and therefore not included in the pin count.
+    On-chip the data is provided parallel, therefore $N$ pins connect to the serial interface.
+    \begin{figure}[htb]
+        \centering
+        \begin{tikzpicture}
+            [
+                module/.style = {draw, rectangle, thick, minimum height = 4cm, minimum width = 2cm, align = center},
+                wire/.style = {thick},
+                port/.style = {thick, circle, inner sep = 0pt, minimum size = 4pt, draw = black, fill = white},
+                bit line/.style = {
+                    wire,
+                    postaction = decorate,
+                    decoration = {
+                        markings,
+                        mark = at position 0.5 with { \draw (-#1, {-1.5 * #1}) -- (#1, {1.5 * #1}); }
+                    }
+                },
+                bit line/.default = 2pt,
+                bitanno/.style = {font = \small}
+            ]
+            \node[module] (interface) {Serial\\Interface};
+            \coordinate (leftfitboundary) at ($(interface.west)+(-0.5, 0.8)$);
+            \draw[wire] ($(interface.west)+(0, 0.8)$) -- ++(-1.5, 0) node[port, label = above:Clock] (clock) {};
+            \draw[wire] ($(interface.west)-(0, 0.8)$) -- ++(-1.5, 0) node[port, label = above:Data] (datain) {};
+            \node[port, label = above:VDD] (vdd) at ($(clock)+(0,  2)$) {};
+            \node[port, label = above:VSS] (vss) at ($(datain)+(0, -2)$) {};
+            \draw[wire] (vdd) -| (interface.north);
+            \draw[wire] (vss) -| (interface.south);
+            \draw[bit line] (interface.east) -- node[below, bitanno] {$N$} ++(1, 0) node[port, label = {[name = chipdatalabel] above:Chip Data}] (chipdata) {};
+            \node[fill = black, fill opacity = 0.1, fit = (interface) (leftfitboundary) (chipdata) (chipdatalabel)] (fit) {};
+            \node[above left = 0cm] at (fit.south east) {On-Chip};
+        \end{tikzpicture}
+        \caption{Block Diagram of the Serial Interface}
+        \label{fig:blockdiagram}
+    \end{figure}
+    
+    The clock is always provided by the driver circuit (off-chip), the data are bidirectional.
+    \section{Communication Protocol}
+    The serial interface is state-based and command-driven.
+    The following commands are supported and their bit patterns are documented in table~\ref{tab:commandpatterns}:
+    \begin{itemize}
+        \item \command{RESET}
+
+            Reset the entire register to its default value.
+            This only resets the main registers that face the circuits on the chip.
+            The communication registers are not affected, which means that an update of the main registers following a reset does not necessarily
+            ensure default data.
+        \item \command{START\_SEND}
+
+            Start the transmission of data from the driver to the chip.
+            The data directly follow the command.
+            The interface assumes that the correct number of bits is sent.
+            It is not possible to send any number of bits different from the actual data length of the interface.
+        \item \command{START\_RECEIVE}
+
+            Start the reception of data from the chip to the driver.
+            This is the only state where the chip drives the data line.
+            Following this command, the driver must disable the output buffers that drive the data line, that is, enter a high-Z mode.
+            This must happen in half of a clock cycle (see detailed timing diagram below).
+            The interface then sends out the current $N$ bits that are stored in the interface.
+            Only the data in the communication registers is sent, not what is actually stored in the main registers facing the circuits on the
+            chip.
+            It is not possible to read the data stored in the main registers.
+        \item \command{UPDATE}
+
+            Apply the data stored in the communication registers to the main registers.
+            The data out of the interface (the bus that goes into the chip) only reflects this data.
+            Without an update, this data is never changed.
+            This ensures that there is no garbage data while the communication registers are being written.
+            Usually an update directly follows a send command.
+    \end{itemize}
+    \begin{table}[htb]
+        \centering
+        \begin{tabular}{ll}
+            \toprule
+            Command                     & Pattern \\
+            \midrule
+            \command{RESET}             & \command{00} \\
+            \command{START\_SEND}       & \command{01} \\
+            \command{START\_RECEIVE}    & \command{01} \\
+            \command{UPDATE}            & \command{01} \\
+            \bottomrule
+        \end{tabular}
+        \caption{Bit Patterns of Commands}
+        \label{tab:commandpatterns}
+    \end{table}
+
+    All commands are preceeded by a start sequence.
+    The default (and currently implemented) sequence is \command{101}.
+\end{document}
+
