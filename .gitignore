@@ -1,2 +1,6 @@
 signals*
 *_synthesized.v
+
+# latex stuff
+doc.aux
+doc.log
