@@ -12,8 +12,10 @@ all:
 	@echo possible actions:
 	@echo "  simulate"
 	@echo "  synth"
+	@echo "  simulate_synth"
+	@echo "  waveforms"
 	@echo "  timing"
-	@echo required tools are iverilog for simulation, yosys for synthesis and openSTA for timing analysis
+	@echo required tools are iverilog for simulation, gtkwave for viewing the waveforms, yosys for synthesis and openSTA for timing analysis
 
 .PHONY: simulate
 simulate:
