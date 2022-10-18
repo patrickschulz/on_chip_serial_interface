@@ -64,3 +64,7 @@ timing: synth
 	echo report_checks -path_delay min_max >> $(timing_script)
 	sta -exit -no_splash $(timing_script)
 	rm $(timing_script)
+
+.PHONY: clean
+clean:
+	rm -f serial_interface_synthesized.v
