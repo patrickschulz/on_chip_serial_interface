@@ -4,6 +4,7 @@ stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
 
 # intermediate files
+synthesis_script := sythesize
 timing_script := timing.tcl
 
 .PHONY: all
@@ -31,22 +32,24 @@ waveforms:
 	gtkwave -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
-	echo "# RTL sources" > synthesize;
-	for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> synthesize; done
-	echo "# gate-level sources" >> synthesize;
-	for source in $(gatelevelsources); do printf "read_verilog -sv %s\n" "$$source" >> synthesize; done
-	echo read_liberty -lib $(stdlib).lib >> synthesize
-	echo synth -top serial_interface >> synthesize
-	echo dfflibmap -liberty $(stdlib).lib >> synthesize
-	echo abc -liberty $(stdlib).lib >> synthesize
-	echo opt >> synthesize
-	echo opt_clean -purge >> synthesize
-	echo clean >> synthesize
-	#echo flatten >> synthesize
-	echo stat -liberty $(stdlib).lib >> synthesize
-	echo write_verilog serial_interface_synthesized.v >> synthesize
-	yosys -s synthesize
-	rm synthesize
+	echo "# RTL sources" > $(synthesis_script);
+	for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
+	echo "# gate-level sources" >> $(synthesis_script);
+	for source in $(gatelevelsources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
+	echo "# liberty file" >> $(synthesis_script);
+	echo read_liberty -lib $(stdlib).lib >> $(synthesis_script)
+	echo "# synthesis" >> $(synthesis_script);
+	echo synth -top serial_interface >> $(synthesis_script)
+	echo dfflibmap -liberty $(stdlib).lib >> $(synthesis_script)
+	echo abc -liberty $(stdlib).lib >> $(synthesis_script)
+	echo opt >> $(synthesis_script)
+	echo opt_clean -purge >> $(synthesis_script)
+	echo clean >> $(synthesis_script)
+	#echo flatten >> $(synthesis_script)
+	echo stat -liberty $(stdlib).lib >> $(synthesis_script)
+	echo write_verilog serial_interface_synthesized.v >> $(synthesis_script)
+	yosys -s $(synthesis_script)
+	rm $(synthesis_script)
 
 .PHONY: synth
 synth: serial_interface_synthesized.v
