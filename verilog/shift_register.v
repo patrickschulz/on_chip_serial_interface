@@ -31,7 +31,7 @@ module shift_register
         .O(data_in_internal)
     );
 
-    register_cell regcell[`DATA_LEN - 1:0](
+    register_cell_0 regcell[`DATA_LEN - 1:0](
         .chain_in({ data_in_internal, cells_out[`DATA_LEN - 1:1] }),
         .update(update),
         .clk(clk),

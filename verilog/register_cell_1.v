@@ -1,4 +1,4 @@
-module register_cell(clk, reset, update, enable, chain_in, chain_out, bit_out);
+module register_cell_1(clk, reset, update, enable, chain_in, chain_out, bit_out);
   input wire clk;
   input wire reset;
   input wire enable;
@@ -11,6 +11,7 @@ module register_cell(clk, reset, update, enable, chain_in, chain_out, bit_out);
   wire hold_write;
   wire in_or_reset;
   wire update_or_store;
+  wire update_or_store_inv;
   /* shifting dffs */
   mux hold_write_mux (
     .IP(chain_in),
@@ -35,9 +36,13 @@ module register_cell(clk, reset, update, enable, chain_in, chain_out, bit_out);
     .SEL(update),
     .O(update_or_store)
   );
-  and_gate reset_and_gate ( /* this gate has to be changed if reset-high registers are needed */
+  not_gate update_store_not_gate (
+      .I(update_or_store),
+      .O(update_or_store_inv)
+  );
+  nand_gate reset_nand_gate (
     .A(reset),
-    .B(update_or_store),
+    .B(update_or_store_inv),
     .O(in_or_reset)
   );
   dffpq dff_buf (
