@@ -31,7 +31,7 @@ simulate_synth: synth
 
 .PHONY: waveforms
 waveforms:
-	gtkwave -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
+	gtkwave -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
 	echo "# RTL sources" > $(synthesis_script);
