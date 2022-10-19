@@ -22,7 +22,8 @@ module serial_ctrl
         SEND_DATA_SETUP_ST   = 4'b0011,  // sending data, setup tristate buffer
         UPDATE_ST            = 4'b0101,  // update shift register
         RESET_REGISTER_ST    = 4'b0110,  // reset shift register
-        SEND_DATA_RECOVER_ST = 4'b0111;  // recover from write/read shift to prevent glitches
+        SEND_DATA_RECOVER_ST = 4'b0111,  // recover from write/read shift to prevent glitches
+        UNUSED_ST            = 4'b0100;
 
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
@@ -111,6 +112,9 @@ module serial_ctrl
                     else begin
                         curr_state_pre <= RECEIVE_DATA_ST;
                     end
+                end
+                UNUSED_ST: begin
+                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
                 end
             endcase
         end
