@@ -2,6 +2,9 @@ signals*
 *_synthesized.v
 synthesis.log
 
+# generated verilog source files
+shift_register.v
+
 # latex stuff
 doc.aux
 doc.log

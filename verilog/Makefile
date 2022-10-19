@@ -26,7 +26,7 @@ all:
 	@echo required tools are iverilog for simulation, gtkwave for viewing the waveforms, yosys for synthesis and openSTA for timing analysis
 
 .PHONY: simulate
-simulate:
+simulate: shift_register.v
 	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
@@ -40,6 +40,10 @@ simulate_synth: synth
 .PHONY: waveforms
 waveforms:
 	@$(waveformviewer) -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
+
+# generated verilog source files
+shift_register.v: generate_shift_register.lua
+	lua generate_shift_register.lua > shift_register.v
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
 	@echo "synthesizing..."
