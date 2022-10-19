@@ -112,6 +112,9 @@ module testbench;
         // wait for reset
         wait_n_clk_cycles(10);
 
+        test_data = 0;
+        assert (bit_out == test_data) else $error("bit out %b bei %b", bit_out, test_data);
+
         // loop to try all possible values that can be stored in the daisychain
         for (int i = `LOWER_LIMIT; i <= `UPPER_LIMIT; i++) begin
             test_data = i;

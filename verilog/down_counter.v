@@ -23,5 +23,5 @@ module down_counter(clk, reset, outp, outn);
     dffnq dffnq[N - 1:0] (.CLK(clk), .D(outp), .Q(outn));
     xnor_gate xnor_gate[N - 1:0] (.A({carry[N-2:0], 1'b0}), .B(outn), .O(net0));
     or_gate or_gate[N - 1:0] (.A({carry[N-2:0], 1'b0}), .B(outn), .O(carry));
-    mux mux[N - 1:0] (.A(net0), .B(1'b1), .SEL(reset), .O(next));
+    mux mux[N - 1:0] (.IP(net0), .IN(1'b1), .SEL(reset), .O(next));
 endmodule

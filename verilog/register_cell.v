@@ -1,44 +1,53 @@
-module register_cell(chain_in, update, clk, reset, enable, chain_out, bit_out);
+module register_cell(clk, reset, update, enable, chain_in, chain_out, bit_out);
+  input wire clk;
+  input wire reset;
+  input wire enable;
+  input wire update;
+  input wire chain_in;
+  output wire chain_out;
+  output wire bit_out;
+  wire ff_in;
+  wire store;
   wire hold_write;
   wire in_or_reset;
-  output bit_out;
-  input chain_in;
-  output chain_out;
-  input clk;
-  input enable;
-  wire ff_in;
-  input reset;
-  input update;
-  wire update_clk;
+  wire update_or_store;
+  /* shifting dffs */
   mux hold_write_mux (
-    .B(chain_out),
-    .A(chain_in),
+    .IP(chain_in),
+    .IN(chain_out),
     .SEL(enable),
     .O(hold_write)
   );
-  and_gate and_gate (
-    .A(ff_in),
-    .B(reset),
-    .O(in_or_reset)
-  );
-  and_gate clk_gate (
-    .A(clk),
-    .B(update),
-    .O(update_clk)
-  );
-  dffpq dff_buf (
-    .CLK(update_clk),
-    .D(in_or_reset),
-    .Q(bit_out)
+  dffpq dff_in (
+    .CLK(clk),
+    .D(hold_write),
+    .Q(ff_in)
   );
   dffnq dff_out (
     .CLK(clk),
     .D(ff_in),
     .Q(chain_out)
   );
-  dffpq dff_in (
+  /* bit-out dff */
+  mux dff_buf_mux (
+    .IP(chain_out),
+    .IN(store),
+    .SEL(update),
+    .O(update_or_store)
+  );
+  and_gate reset_and_gate ( /* this gate has to be changed if reset-high registers are needed */
+    .A(reset),
+    .B(update_or_store),
+    .O(in_or_reset)
+  );
+  dffpq dff_buf (
     .CLK(clk),
-    .D(hold_write),
-    .Q(ff_in)
+    .D(in_or_reset),
+    .Q(bit_out)
+  );
+  dffnq dff_store (
+    .CLK(clk),
+    .D(bit_out),
+    .Q(store)
   );
 endmodule

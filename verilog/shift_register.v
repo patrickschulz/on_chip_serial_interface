@@ -25,8 +25,8 @@ module shift_register
     // however, the data_inout pin is driven with exactly the same data so
     // that can be read back directly (without the mux). Check this!
     mux data_in_mux (
-        .A(data_in),
-        .B(data_out),
+        .IP(data_in),
+        .IN(data_out),
         .SEL(write),
         .O(data_in_internal)
     );
