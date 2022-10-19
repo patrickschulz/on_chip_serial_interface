@@ -7,6 +7,10 @@ VFLAGS := -g2012
 synthesis_script := sythesize
 timing_script := timing.tcl
 
+# tools
+synthesis_tool := yosys
+timing_tool := sta
+
 .PHONY: all
 all:
 	@echo possible actions:
@@ -19,14 +23,14 @@ all:
 
 .PHONY: simulate
 simulate:
-	@iverilog $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o design
+	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o design
 	@vvp design
 	rm design
 
 .PHONY: simulate_synth
 simulate_synth: synth
-	iverilog $(VFLAGS) config.v serial_interface_synthesized.v testbench.v $(stdlib).v -o design
-	vvp design
+	@$(simulator) $(VFLAGS) config.v serial_interface_synthesized.v testbench.v $(stdlib).v -o design
+	@vvp design
 	rm design
 
 .PHONY: waveforms
@@ -34,39 +38,37 @@ waveforms:
 	gtkwave -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
-	echo "# RTL sources" > $(synthesis_script);
-	for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
-	echo "# gate-level sources" >> $(synthesis_script);
-	for source in $(gatelevelsources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
-	echo "# liberty file" >> $(synthesis_script);
-	echo read_liberty -lib $(stdlib).lib >> $(synthesis_script)
-	echo "# synthesis" >> $(synthesis_script);
-	echo synth -top serial_interface >> $(synthesis_script)
-	echo dfflibmap -liberty $(stdlib).lib >> $(synthesis_script)
-	echo abc -liberty $(stdlib).lib >> $(synthesis_script)
-	echo opt >> $(synthesis_script)
-	echo opt_clean -purge >> $(synthesis_script)
-	echo clean >> $(synthesis_script)
-	#echo flatten >> $(synthesis_script)
-	echo stat -liberty $(stdlib).lib >> $(synthesis_script)
-	echo write_verilog serial_interface_synthesized.v >> $(synthesis_script)
-	yosys -s $(synthesis_script)
-	rm $(synthesis_script)
+	@echo "# RTL sources" > $(synthesis_script);
+	@for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
+	@echo "# gate-level sources" >> $(synthesis_script);
+	@for source in $(gatelevelsources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
+	@echo "# liberty file" >> $(synthesis_script);
+	@echo read_liberty -lib $(stdlib).lib >> $(synthesis_script)
+	@echo "# synthesis" >> $(synthesis_script);
+	@echo synth -top serial_interface >> $(synthesis_script)
+	@echo dfflibmap -liberty $(stdlib).lib >> $(synthesis_script)
+	@echo abc -liberty $(stdlib).lib >> $(synthesis_script)
+	@echo opt >> $(synthesis_script)
+	@echo opt_clean -purge >> $(synthesis_script)
+	@echo clean >> $(synthesis_script)
+	@echo stat -liberty $(stdlib).lib >> $(synthesis_script)
+	@echo write_verilog serial_interface_synthesized.v >> $(synthesis_script)
+	@$(synthesis_tool) -s $(synthesis_script) -l synthesis.log > /dev/null
+	@rm $(synthesis_script)
 
 .PHONY: synth
 synth: serial_interface_synthesized.v
 
 .PHONY: timing
 timing: synth
-	rm -f $(timing_script)
-	echo read_verilog serial_interface_synthesized.v > $(timing_script)
-	echo read_liberty $(stdlib).lib >> $(timing_script)
-	echo link_design serial_interface >> $(timing_script)
-	echo create_clock -name clk -period 10000 {clk} >> $(timing_script)
-	echo report_checks -path_delay min_max >> $(timing_script)
-	sta -exit -no_splash $(timing_script)
-	rm $(timing_script)
+	@echo read_verilog serial_interface_synthesized.v > $(timing_script)
+	@echo read_liberty $(stdlib).lib >> $(timing_script)
+	@echo link_design serial_interface >> $(timing_script)
+	@echo create_clock -name clk -period 10000 {clk} >> $(timing_script)
+	@echo report_checks -path_delay min_max >> $(timing_script)
+	@$(timing_tool) -exit -no_splash $(timing_script)
+	@rm $(timing_script)
 
 .PHONY: clean
 clean:
-	rm -f serial_interface_synthesized.v
+	@rm -f serial_interface_synthesized.v
