@@ -4,12 +4,16 @@ stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
 
 # intermediate files
+compiled_design  := design
 synthesis_script := sythesize
-timing_script := timing.tcl
+timing_script 	 := timing.tcl
 
 # tools
-synthesis_tool := yosys
-timing_tool := sta
+simulator    	:= iverilog
+simulator_vm 	:= vvp
+waveformviewer  := gtkwave
+synthesis_tool 	:= yosys
+timing_tool 	:= sta
 
 .PHONY: all
 all:
@@ -23,21 +27,22 @@ all:
 
 .PHONY: simulate
 simulate:
-	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o design
-	@vvp design
-	rm design
+	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
+	@$(simulator_vm) $(compiled_design)
+	@rm $(compiled_design)
 
 .PHONY: simulate_synth
 simulate_synth: synth
-	@$(simulator) $(VFLAGS) config.v serial_interface_synthesized.v testbench.v $(stdlib).v -o design
-	@vvp design
-	rm design
+	@$(simulator) $(VFLAGS) config.v serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
+	@$(simulator_vm) $(compiled_design)
+	@rm $(compiled_design)
 
 .PHONY: waveforms
 waveforms:
-	gtkwave -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
+	@$(waveformviewer) -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
+	@echo "synthesizing..."
 	@echo "# RTL sources" > $(synthesis_script);
 	@for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
 	@echo "# gate-level sources" >> $(synthesis_script);
