@@ -54,11 +54,12 @@ table.insert(lines, "    endtask")
 table.insert(lines, "")
 table.insert(lines, "    task send_command(reg [`CMD_LEN - 1:0] cmd);")
 table.insert(lines, "        // send start bits")
-table.insert(lines, "        data_in <= 1'b1;")
-table.insert(lines, "        @(negedge clk);")
-table.insert(lines, "        data_in <= 1'b0;")
-table.insert(lines, "        @(negedge clk);")
-table.insert(lines, "        data_in <= 1'b1;")
+for i = 1, settings.start_pattern_length do
+    table.insert(lines, string.format("        data_in <= 1'b%d;", settings.start_pattern[i]))
+    if i ~= settings.start_pattern_length then
+        table.insert(lines, "        @(negedge clk);")
+    end
+end
 table.insert(lines, "")
 table.insert(lines, "        // send command")
 table.insert(lines, "        for(int i = `CMD_LEN - 1; i >= 0; i--) begin")
