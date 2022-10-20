@@ -1,40 +1,40 @@
 local settings = require "settings"
 
-local lines = {}
+local util = require "util"
 
-table.insert(lines, "module command_register(clk, data, receive, ready, command);")
-table.insert(lines, "    input clk;")
-table.insert(lines, "    input data;")
-table.insert(lines, "    input receive;")
-table.insert(lines, "    output ready;")
-table.insert(lines, "    output [`CMD_LEN - 1:0] command;")
-table.insert(lines, "    assign ready =")
+local lines = util.make_lines_insert()
+
+lines:add( "module command_register(clk, data, receive, ready, command);")
+lines:add( "    input clk;")
+lines:add( "    input data;")
+lines:add( "    input receive;")
+lines:add( "    output ready;")
+lines:add( "    output [%d:0] command;", settings.commands_length)
+lines:add( "    assign ready =")
 for i = 1, settings.start_pattern_length do
     local line = {}
-    table.insert(line, string.format("        cmd_reg[`CMD_LEN + %d - %d] == 1'b%d", settings.start_pattern_length, i, settings.start_pattern[i]))
+    table.insert(line, string.format("        cmd_reg[%d] == 1'b%d", settings.commands_length +  settings.start_pattern_length - i, settings.start_pattern[i]))
     if i ~= settings.start_pattern_length then
         table.insert(line, " &&")
     else
         table.insert(line, ";")
     end
-    table.insert(lines, table.concat(line))
+    lines:add(table.concat(line))
 end
-table.insert(lines, "    assign command = cmd_reg[`CMD_LEN - 1:0];")
-table.insert(lines, string.format("    reg [`CMD_LEN + %d - 1:0] cmd_reg;", settings.start_pattern_length))
-table.insert(lines, string.format("    reg [`CMD_LEN + %d - 1:0] cmd_reg_pre;", settings.start_pattern_length))
-table.insert(lines, "    always @ (negedge clk) begin")
-table.insert(lines, "        cmd_reg <= cmd_reg_pre;")
-table.insert(lines, "    end")
-table.insert(lines, "    always @(posedge clk) begin")
-table.insert(lines, "        if(receive) begin")
-table.insert(lines, "            cmd_reg_pre <= (cmd_reg << 1) | data;")
-table.insert(lines, "        end")
-table.insert(lines, "        else begin")
-table.insert(lines, "            cmd_reg_pre <= (cmd_reg << 1);")
-table.insert(lines, "        end")
-table.insert(lines, "    end")
-table.insert(lines, "endmodule")
+lines:add("    assign command = cmd_reg[%d:0];", settings.commands_length - 1)
+lines:add(string.format("    reg [%d:0] cmd_reg;", settings.commands_length +  settings.start_pattern_length - 1))
+lines:add(string.format("    reg [%d:0] cmd_reg_pre;", settings.commands_length + settings.start_pattern_length - 1))
+lines:add("    always @ (negedge clk) begin")
+lines:add("        cmd_reg <= cmd_reg_pre;")
+lines:add("    end")
+lines:add("    always @(posedge clk) begin")
+lines:add("        if(receive) begin")
+lines:add("            cmd_reg_pre <= (cmd_reg << 1) | data;")
+lines:add("        end")
+lines:add("        else begin")
+lines:add("            cmd_reg_pre <= (cmd_reg << 1);")
+lines:add("        end")
+lines:add("    end")
+lines:add("endmodule")
 
-local file = io.open("command_register.v", "w")
-file:write(table.concat(lines, "\n"))
-file:close()
+util.write_lines("command_register.v", lines)

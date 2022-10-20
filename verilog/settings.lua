@@ -22,6 +22,24 @@ local start_pattern = { 1, 0, 1 }
 local reset_length = math.ceil(math.log(data_length + 2, 2)) + 1
 local reset_numbits = 2 ^ reset_length
 
+-- command types to be received from the external controller
+-- after a command a zero stop bit is sent
+-- this ensures that the line is pulled down after a command
+local commands = {
+    reset   = { 0, 0 },
+    send    = { 0, 1 },
+    receive = { 1, 0 },
+    update  = { 1, 1 },
+}
+local commands_length = 0
+for _, command in pairs(commands) do
+    local len = #command
+    if commands_length > 0 and len ~= commands_length then
+        error("all commands must have the same number of bits!")
+    end
+    commands_length = len
+end
+
 return {
     resetpattern = resetpattern,
     data_length = data_length,
@@ -30,4 +48,6 @@ return {
     reset_numbits = reset_numbits,
     start_pattern = start_pattern,
     start_pattern_length = #start_pattern,
+    commands = commands,
+    commands_length = commands_length,
 }

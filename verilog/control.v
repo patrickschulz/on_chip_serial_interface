@@ -52,7 +52,7 @@ module serial_ctrl
     wire receive_command;
     assign receive_command = curr_state == WAIT_FOR_COMMAND_ST;
     wire command_ready;
-    wire [`CMD_LEN - 1:0] command;
+    wire [1:0] command;
     command_register command_register(.clk(clk), .data(data_in), .receive(receive_command), .ready(command_ready), .command(command));
 
     always @(posedge clk) begin
@@ -67,16 +67,16 @@ module serial_ctrl
                 WAIT_FOR_COMMAND_ST : begin
                     if(command_ready) begin
                         case (command)
-                            `START_SEND_CMD: begin
+                            2'b01: begin
                                 curr_state_pre <= SEND_DATA_SETUP_ST;
                             end
-                            `START_RECEIVE_CMD: begin
+                            2'b10: begin
                                 curr_state_pre <= RECEIVE_DATA_ST;
                             end
-                            `RESET_CMD: begin
+                            2'b00: begin
                                 curr_state_pre <= RESET_REGISTER_ST;
                             end
-                            `UPDATE_CMD: begin
+                            2'b11: begin
                                 curr_state_pre <= UPDATE_ST;
                             end
                         endcase

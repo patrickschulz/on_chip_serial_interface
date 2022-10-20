@@ -1,4 +1,4 @@
-sources := config.v data_counter.v reset_counter.v serial_ctrl.v command_register.v toplevel.v
+sources := data_counter.v reset_counter.v control.v command_register.v toplevel.v
 gatelevelsources := register_cell_0.v register_cell_1.v shift_register.v down_counter.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
@@ -33,7 +33,7 @@ simulate: $(sources) $(gatelevelsources) testbench.v
 
 .PHONY: simulate_synth
 simulate_synth: synth testbench.v
-	@$(simulator) $(VFLAGS) config.v serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
+	@$(simulator) $(VFLAGS) serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
 
@@ -43,22 +43,25 @@ waveforms:
 
 # generated verilog source files
 reset_counter.v: generate_reset_counter.lua settings.lua
-	lua generate_reset_counter.lua
+	@lua generate_reset_counter.lua
 
 command_register.v: generate_command_register.lua settings.lua
-	lua generate_command_register.lua
+	@lua generate_command_register.lua
 
 data_counter.v: generate_data_counter.lua settings.lua
-	lua generate_data_counter.lua
+	@lua generate_data_counter.lua
 
 shift_register.v: generate_shift_register.lua settings.lua
-	lua generate_shift_register.lua
+	@lua generate_shift_register.lua
+
+control.v: generate_control.lua settings.lua
+	@lua generate_control.lua
 
 toplevel.v: generate_toplevel.lua settings.lua
-	lua generate_toplevel.lua
+	@lua generate_toplevel.lua
 
 testbench.v: generate_testbench.lua settings.lua
-	lua generate_testbench.lua
+	@lua generate_testbench.lua
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
 	@echo "synthesizing..."
@@ -95,4 +98,4 @@ timing: synth
 
 .PHONY: clean
 clean:
-	@rm -f reset_counter.v data_counter.v command_register.v shift_register.v serial_interface_synthesized.v toplevel.v testbench.v synthesis.log
+	@rm -f serial_interface_synthesized.v reset_counter.v data_counter.v command_register.v shift_register.v control.v toplevel.v testbench.v synthesis.log
