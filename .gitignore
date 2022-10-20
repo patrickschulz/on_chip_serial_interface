@@ -4,6 +4,11 @@ synthesis.log
 
 # generated verilog source files
 shift_register.v
+toplevel.v
+data_counter.v
+reset_counter.v
+command_register.v
+testbench.v
 
 # latex stuff
 doc.aux

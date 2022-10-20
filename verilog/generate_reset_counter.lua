@@ -1,0 +1,25 @@
+local settings = require "settings"
+
+local lines = {}
+table.insert(lines, "module reset_counter")
+table.insert(lines, "(")
+table.insert(lines, "    input clk,")
+table.insert(lines, "    input data,")
+table.insert(lines, "    output reset")
+table.insert(lines, ");")
+table.insert(lines, string.format("    wire [%d:0] outp;", settings.reset_length - 1))
+table.insert(lines, string.format("    wire [%d:0] outn;", settings.reset_length - 1))
+table.insert(lines, string.format("    wire [%d:0] next;", settings.reset_length - 1))
+table.insert(lines, string.format("    wire [%d:0] carry;", settings.reset_length - 1))
+table.insert(lines, string.format("    wire [%d:0] net0;", settings.reset_length - 1))
+table.insert(lines, string.format("    dffpq dffpq[%d:0] (.CLK(clk), .D(next), .Q(outp));", settings.reset_length - 1))
+table.insert(lines, string.format("    dffnq dffnq[%d:0] (.CLK(clk), .D(outp), .Q(outn));", settings.reset_length - 1))
+table.insert(lines, string.format("    xnor_gate xnor_gate[%d:0] (.A({carry[%d:0], 1'b0}), .B(outn), .O(net0));", settings.reset_length - 1, settings.reset_length - 2))
+table.insert(lines, string.format("    or_gate or_gate[%d:0] (.A({carry[%d:0], 1'b0}), .B(outn), .O(carry));", settings.reset_length - 1, settings.reset_length - 2))
+table.insert(lines, string.format("    mux mux[%d:0] (.IP(net0), .IN(1'b1), .SEL(data), .O(next));", settings.reset_length - 1))
+table.insert(lines, string.format("    assign reset = !outn[%d];", settings.reset_length - 1))
+table.insert(lines, "endmodule")
+
+local file = io.open("reset_counter.v", "w")
+file:write(table.concat(lines, "\n"))
+file:close()
