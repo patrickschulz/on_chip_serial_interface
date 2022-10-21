@@ -9,6 +9,7 @@ data_counter.v
 reset_counter.v
 command_register.v
 testbench.v
+control.v
 
 # latex stuff
 doc.aux
