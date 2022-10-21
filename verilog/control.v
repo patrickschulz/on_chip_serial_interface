@@ -23,7 +23,7 @@ module serial_ctrl
         UPDATE_ST            = 4'b0101,  // update shift register
         RESET_REGISTER_ST    = 4'b0110,  // reset shift register
         SEND_DATA_RECOVER_ST = 4'b0111,  // recover from write/read shift to prevent glitches
-        UNUSED_ST            = 4'b0100;
+        FLUSH_COMMAND_ST     = 4'b0100;
 
     reg [3:0] curr_state_pre;  // changes with posedge
     reg [3:0] curr_state;      // changes with negedge
@@ -52,8 +52,9 @@ module serial_ctrl
     wire receive_command;
     assign receive_command = curr_state == WAIT_FOR_COMMAND_ST;
     wire command_ready;
+    wire command_empty;
     wire [1:0] command;
-    command_register command_register(.clk(clk), .data(data_in), .receive(receive_command), .ready(command_ready), .command(command));
+    command_register command_register(.clk(clk), .data(data_in), .receive(receive_command), .empty(command_empty), .ready(command_ready), .command(command));
 
     always @(posedge clk) begin
         if(reset_internal) begin
@@ -67,17 +68,17 @@ module serial_ctrl
                 WAIT_FOR_COMMAND_ST : begin
                     if(command_ready) begin
                         case (command)
+                            2'b00: begin
+                                curr_state_pre <= RESET_REGISTER_ST;
+                            end
                             2'b01: begin
+                                curr_state_pre <= UPDATE_ST;
+                            end
+                            2'b11: begin
                                 curr_state_pre <= SEND_DATA_SETUP_ST;
                             end
                             2'b10: begin
                                 curr_state_pre <= RECEIVE_DATA_ST;
-                            end
-                            2'b00: begin
-                                curr_state_pre <= RESET_REGISTER_ST;
-                            end
-                            2'b11: begin
-                                curr_state_pre <= UPDATE_ST;
                             end
                         endcase
                     end
@@ -86,10 +87,10 @@ module serial_ctrl
                     end
                 end
                 UPDATE_ST: begin
-                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                    curr_state_pre <= FLUSH_COMMAND_ST;
                 end
                 RESET_REGISTER_ST: begin
-                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                    curr_state_pre <= FLUSH_COMMAND_ST;
                 end
                 SEND_DATA_SETUP_ST: begin
                     curr_state_pre <= SEND_DATA_ST;
@@ -103,18 +104,23 @@ module serial_ctrl
                     end
                 end
                 SEND_DATA_RECOVER_ST : begin
-                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                    curr_state_pre <= FLUSH_COMMAND_ST;
                 end
                 RECEIVE_DATA_ST: begin
                     if (data_ready) begin
-                        curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                        curr_state_pre <= FLUSH_COMMAND_ST;
                     end
                     else begin
                         curr_state_pre <= RECEIVE_DATA_ST;
                     end
                 end
-                UNUSED_ST: begin
-                    curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                FLUSH_COMMAND_ST: begin
+                    if(command_empty) begin
+                        curr_state_pre <= WAIT_FOR_COMMAND_ST;
+                    end
+                    else begin
+                        curr_state_pre <= FLUSH_COMMAND_ST;
+                    end
                 end
             endcase
         end

@@ -4,12 +4,14 @@ local util = require "util"
 
 local lines = util.make_lines_insert()
 
-lines:add( "module command_register(clk, data, receive, ready, command);")
+lines:add( "module command_register(clk, data, receive, empty, ready, command);")
 lines:add( "    input clk;")
 lines:add( "    input data;")
 lines:add( "    input receive;")
+lines:add( "    output empty;")
 lines:add( "    output ready;")
-lines:add( "    output [%d:0] command;", settings.commands_length)
+lines:add( "    output [%d:0] command;", settings.commands_length - 1)
+lines:add( "    assign empty = cmd_reg == 0;")
 lines:add( "    assign ready =")
 for i = 1, settings.start_pattern_length do
     local line = {}
@@ -22,7 +24,7 @@ for i = 1, settings.start_pattern_length do
     lines:add(table.concat(line))
 end
 lines:add("    assign command = cmd_reg[%d:0];", settings.commands_length - 1)
-lines:add(string.format("    reg [%d:0] cmd_reg;", settings.commands_length +  settings.start_pattern_length - 1))
+lines:add(string.format("    reg [%d:0] cmd_reg;", settings.commands_length + settings.start_pattern_length - 1))
 lines:add(string.format("    reg [%d:0] cmd_reg_pre;", settings.commands_length + settings.start_pattern_length - 1))
 lines:add("    always @ (negedge clk) begin")
 lines:add("        cmd_reg <= cmd_reg_pre;")
