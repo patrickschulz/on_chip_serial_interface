@@ -26,10 +26,10 @@ local reset_numbits = 2 ^ reset_length
 -- after a command a zero stop bit is sent
 -- this ensures that the line is pulled down after a command
 local commands = {
-    reset   = { 0, 0 },
-    update  = { 0, 1 },
-    receive = { 1, 0 },
-    send    = { 1, 1 },
+    reset   = { 0, 0, },
+    update  = { 0, 1, },
+    receive = { 1, 0, },
+    send    = { 1, 1, },
 }
 local commands_length = 0
 for _, command in pairs(commands) do
@@ -39,6 +39,10 @@ for _, command in pairs(commands) do
     end
     commands_length = len
 end
+
+local idle_cycles = 5 -- FIXME: figure out the correct value for this
+                      --        this is most likely more of an issue for low data lenghts
+                      --        furthermore, it depends on the exact sequence of commands so also an update could be problematic
 
 return {
     resetpattern = resetpattern,
@@ -50,4 +54,5 @@ return {
     start_pattern_length = #start_pattern,
     commands = commands,
     commands_length = commands_length,
+    idle_cycles = idle_cycles
 }
