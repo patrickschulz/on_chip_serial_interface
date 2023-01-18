@@ -23,6 +23,8 @@ function layout(toplevel, _P)
             { instance = string.format("tielo_%i", i), reference = "tie_low" },
             { instance = string.format("ison_%i", i+1), reference = "isogate" },
             { instance = string.format("ison_%i", i+2), reference = "isogate" },
+            { instance = string.format("ison_%i", i+3), reference = "isogate" },
+            { instance = string.format("ison_%i", i+4), reference = "isogate" },
         })
 
         table.insert(cellnames, 
@@ -32,6 +34,8 @@ function layout(toplevel, _P)
             { instance = string.format("tie_%i", i), reference = "tie_high" },
             { instance = string.format("not_or_iso_%i", i), reference = (data_ready & (1 << i) and "not_gate" or "isogate") },
             { instance = string.format("and_%i", i), reference = "and_gate" },
+            { instance = string.format("isop_%i", i+1), reference = "isogate" },
+            { instance = string.format("isop_%i", i+2), reference = "isogate" },
         })
 
         table.insert(cellnames, 
@@ -40,11 +44,38 @@ function layout(toplevel, _P)
             { instance = string.format("tiehi_%i", i), reference = "tie_high" },
             { instance = string.format("mux_%i", i), reference = "mux" },
             { instance = string.format("xnor_%i", i), reference = "xnor_gate" },
-            { instance = string.format("isom_%i", i+1), reference = "isogate" },
-            { instance = string.format("isom_%i", i+2), reference = "isogate" },
-            { instance = string.format("ison_%i", i+3), reference = "isogate" },
-            { instance = string.format("ison_%i", i+4), reference = "isogate" },
         })
+
+        -- variable amount of and_gates depending on vector width, for
+        -- data_ready signal insert all cells at end of third row
+        if i ~= 1 then
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i), reference = "isogate" }
+            )
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("and_ready_%i", i), reference = "and_gate" }
+            )
+        else
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i), reference = "isogate" }
+            )
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i+1), reference = "isogate" }
+            )
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i+2), reference = "isogate" }
+            )
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i+3), reference = "isogate" }
+            )
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i+4), reference = "isogate" }
+            )
+            table.insert(cellnames[#cellnames],
+                { instance = string.format("iso%i", i+5), reference = "isogate" }
+            )
+
+        end
     end
     
     local xpitch = bp.gspace + bp.glength
@@ -133,7 +164,7 @@ function layout(toplevel, _P)
             { type = "via", z = 1, nodraw = false },
             { type = "delta", x = -1, nodraw = false },
             { type = "rowshift", rows = 1 },
-            { type = "delta", y = ((i % 2 == 0) and 1 or 3) },
+            { type = "delta", y = ((i % 2 == 0) and 2 or 4) },
             { type = "delta", x = 16, nodraw = false },
             { type = "point", nodraw = false, where = cells[string.format("mux_%i", i)]:get_anchor("O") },
             { type = "via", z = -1, nodraw = false },
@@ -168,6 +199,7 @@ function layout(toplevel, _P)
     { name = "carry_1",
         { type = "point", nodraw = true, where = cells["tielo_1"]:get_anchor("O") },
         { type = "via", z = 1, nodraw = false },
+        { type = "delta", y = 1 },
         { type = "point", nodraw = false, where = cells["or_1"]:get_anchor("A") },
         { type = "via", z = -1, nodraw = false },
         { type = "via", z = 1, nodraw = false },
@@ -208,8 +240,8 @@ function layout(toplevel, _P)
 
     -- assign data_ready = 2 ^ data_numbits - data_length
     for i = 1, data_numbits do
-        if (data_ready & (1 << i)) == 1 then
 
+        if (data_ready & (1 << i)) == 1 then
             --FIXME: todo proper connection for now its just all 0
             table.insert(routes, 
             { name = string.format("outnpre%i", i),
@@ -246,7 +278,44 @@ function layout(toplevel, _P)
         { name = string.format("high%i", i),
             { type = "point", nodraw = true, where = cells[string.format("tie_%i", i)]:get_anchor("O") },
             { type = "via", z = 1, nodraw = false },
+            { type = "delta", y = ((i % 2 == 0) and -1 or 1) },
             { type = "point", nodraw = false, where = cells[string.format("and_%i", i)]:get_anchor("B") },
+            { type = "via", z = -1, nodraw = false },
+        })
+    end
+
+    -- final cascaded and_gates for data_ready signal
+    table.insert(routes, 
+    { name = "data_ready_pre_b1",
+        { type = "point", nodraw = true, where = cells["and_1"]:get_anchor("O") },
+        { type = "via", z = 1, nodraw = false },
+        { type = "delta", x = -2 },
+        { type = "rowshift", rows = 3 },
+        { type = "delta", y = 1 },
+        { type = "point", nodraw = false, where = cells["and_ready_2"]:get_anchor("B") },
+        { type = "via", z = -1, nodraw = false },
+    })
+
+    for i = 2, data_numbits - 1 do
+        table.insert(routes, 
+        { name = string.format("data_ready_pre_b%i", i),
+            { type = "point", nodraw = true, where = cells[string.format("and_ready_%i", i)]:get_anchor("O") },
+            { type = "via", z = 1, nodraw = false },
+            { type = "rowshift", rows = 3 },
+            { type = "delta", y = 1 },
+            { type = "point", nodraw = false, where = cells[string.format("and_ready_%i", i + 1)]:get_anchor("B") },
+            { type = "via", z = -1, nodraw = false },
+        })
+    end
+
+    for i = 2, data_numbits do
+        table.insert(routes, 
+        { name = string.format("data_ready_pre_a%i", i),
+            { type = "point", nodraw = true, where = cells[string.format("and_%i", i)]:get_anchor("O") },
+            { type = "via", z = 1, nodraw = false },
+            { type = "rowshift", rows = 1 },
+            { type = "delta", y = ((i % 2 == 0) and 1 or -1) },
+            { type = "point", nodraw = false, where = cells[string.format("and_ready_%i", i)]:get_anchor("A") },
             { type = "via", z = -1, nodraw = false },
         })
     end
@@ -259,7 +328,3 @@ function layout(toplevel, _P)
     local numinnerroutes = bp.numinnerroutes
     routing.route(toplevel, routes, width, numinnerroutes, pnumtracks, nnumtracks, xgrid, ygrid)
 end
-
-
-
-
