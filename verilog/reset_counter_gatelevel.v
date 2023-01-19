@@ -44,5 +44,7 @@ module reset_counter(clk, data, reset);
     mux _31_ (.IP(net0[2]), .IN(highmux[2]), .SEL(data), .O(next[2]));
     mux _32_ (.IP(net0[3]), .IN(highmux[3]), .SEL(data), .O(next[3]));
 
-    assign reset = !outn[3];
+    /* assign reset = !outn[3]; */
+    not_gate _33_ (.I(outn[3]), .O(reset));
+
 endmodule
