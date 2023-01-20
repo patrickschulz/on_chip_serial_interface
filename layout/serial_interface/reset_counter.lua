@@ -19,6 +19,7 @@ function layout(toplevel, _P)
             { instance = string.format("dffn_%i", i), reference = "dffnq" },
             { instance = string.format("or_%i", i), reference = "or_gate" },
             { instance = string.format("tielo_%i", i), reference = "tie_low" },
+            { instance = string.format("ison_%i", i + 1), reference = "isogate" },
         })
 
         table.insert(cellnames, 
@@ -31,6 +32,7 @@ function layout(toplevel, _P)
             { instance = string.format("isop_%i", i+3), reference = "isogate" },
             { instance = string.format("isop_%i", i+4), reference = "isogate" },
             { instance = string.format("isop_%i", i+5), reference = "isogate" },
+            { instance = string.format("isop_%i", i+6), reference = "isogate" },
         })
 
         table.insert(cellnames, 
@@ -39,6 +41,7 @@ function layout(toplevel, _P)
             { instance = string.format("tiehi_%i", i), reference = "tie_high" },
             { instance = string.format("mux_%i", i), reference = "mux" },
             { instance = string.format("xnor_%i", i), reference = "xnor_gate" },
+            { instance = string.format("isom_%i", i + 1), reference = "isogate" },
         })
 
         if i == reset_numbits then
