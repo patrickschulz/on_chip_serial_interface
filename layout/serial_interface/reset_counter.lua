@@ -203,7 +203,7 @@ function layout(toplevel, _P)
         })
     end
 
-    -- reset connections
+    -- data connections
     for i = 1, reset_numbits - 1 do
         table.insert(routes, 
         { name = string.format("reset_%i", i),
@@ -235,4 +235,10 @@ function layout(toplevel, _P)
     local nnumtracks = bp.nnumtracks
     local numinnerroutes = bp.numinnerroutes
     routing.route(toplevel, routes, width, numinnerroutes, pnumtracks, nnumtracks, xgrid, ygrid)
+
+    -- add ports
+    toplevel:add_port("RESET", generics.metalport(1), cells[string.format("isoornot_%i", reset_numbits)]:get_anchor("O"))
+    toplevel:add_port("DATA", generics.metalport(4), cells["mux_1"]:get_anchor("SEL"))
+    toplevel:add_port("CLK", generics.metalport(3), cells["dffn_1"]:get_anchor("CLK"))
+
 end
