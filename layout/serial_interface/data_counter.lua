@@ -327,4 +327,9 @@ function layout(toplevel, _P)
     local nnumtracks = bp.nnumtracks
     local numinnerroutes = bp.numinnerroutes
     routing.route(toplevel, routes, width, numinnerroutes, pnumtracks, nnumtracks, xgrid, ygrid)
+
+    -- add ports
+    toplevel:add_port("DATA_READY", generics.metalport(1), cells[string.format("and_ready_%i", data_numbits)]:get_anchor("O"))
+    toplevel:add_port("RESET", generics.metalport(4), cells["mux_1"]:get_anchor("SEL"))
+    toplevel:add_port("CLK", generics.metalport(3), cells["dffn_1"]:get_anchor("CLK"))
 end
