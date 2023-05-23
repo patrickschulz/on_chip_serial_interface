@@ -35,7 +35,7 @@ module register_cell_0(clk, reset, update, enable, chain_in, chain_out, bit_out)
     .SEL(update),
     .O(update_or_store)
   );
-  and_gate reset_and_gate ( /* this gate has to be changed if reset-high registers are needed */
+  and_gate reset_and_gate (
     .A(reset),
     .B(update_or_store),
     .O(in_or_reset)

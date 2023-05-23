@@ -3,9 +3,9 @@ local settings = require "settings"
 local lines = {}
 table.insert(lines, "module reset_counter")
 table.insert(lines, "(")
-table.insert(lines, "    input clk,")
-table.insert(lines, "    input data,")
-table.insert(lines, "    output reset")
+table.insert(lines, "    input wire clk,")
+table.insert(lines, "    input wire data,")
+table.insert(lines, "    output wire reset")
 table.insert(lines, ");")
 table.insert(lines, string.format("    wire [%d:0] outp;", settings.reset_length - 1))
 table.insert(lines, string.format("    wire [%d:0] outn;", settings.reset_length - 1))

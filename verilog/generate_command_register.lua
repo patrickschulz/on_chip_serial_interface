@@ -5,12 +5,12 @@ local util = require "util"
 local lines = util.make_lines_insert()
 
 lines:add( "module command_register(clk, data, receive, empty, ready, command);")
-lines:add( "    input clk;")
-lines:add( "    input data;")
-lines:add( "    input receive;")
-lines:add( "    output empty;")
-lines:add( "    output ready;")
-lines:add( "    output [%d:0] command;", settings.commands_length - 1)
+lines:add( "    input wire clk;")
+lines:add( "    input wire data;")
+lines:add( "    input wire receive;")
+lines:add( "    output wire empty;")
+lines:add( "    output wire ready;")
+lines:add( "    output wire [%d:0] command;", settings.commands_length - 1)
 lines:add( "    assign empty = cmd_reg == 0;")
 lines:add( "    assign ready =")
 for i = 1, settings.start_pattern_length do
