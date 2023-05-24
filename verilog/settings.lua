@@ -27,7 +27,7 @@ local reset_numbits = 2 ^ reset_length
 -- this ensures that the line is pulled down after a command
 local commands = {
     reset   = { 0, 0, },
-    update  = { 0, 1, },
+    --update  = { 0, 1, },
     receive = { 1, 0, },
     send    = { 1, 1, },
 }
