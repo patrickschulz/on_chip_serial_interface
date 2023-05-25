@@ -5,7 +5,7 @@ VFLAGS := -g2012
 
 # intermediate files
 compiled_design  := design
-synthesis_script := sythesize
+synthesis_script := synthesize
 timing_script 	 := timing.tcl
 
 # tools
