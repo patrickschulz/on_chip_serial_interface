@@ -91,7 +91,8 @@ lines:add("                            %s: begin", util.format_binary(settings.c
 lines:add("                                curr_state_pre <= RECEIVE_DATA_ST;")
 lines:add("                            end")
 lines:add("                            default: begin")
-lines:add("                                $display(\"unknown command\");")
+-- FIXME: error mode?
+lines:add("                                curr_state_pre <= WAIT_FOR_COMMAND_ST;")
 lines:add("                            end")
 lines:add("                        endcase")
 lines:add("                    end")
