@@ -27,6 +27,7 @@ local reset_numbits = 2 ^ reset_length
 -- this ensures that the line is pulled down after a command
 local commands = {
     reset   = { 0, 0, },
+    -- update used to exist, but I don't think there is a real use case for writing without updating
     --update  = { 0, 1, },
     receive = { 1, 0, },
     send    = { 1, 1, },
@@ -40,9 +41,9 @@ for _, command in pairs(commands) do
     commands_length = len
 end
 
-local idle_cycles = 5 -- FIXME: figure out the correct value for this
+local idle_cycles = 5 -- FIXME: figure out the minimum value for this
                       --        this is most likely more of an issue for low data lenghts
-                      --        furthermore, it depends on the exact sequence of commands so also an update could be problematic
+                      --        furthermore, it depends on the exact sequence of commands so also a receive could be problematic
 
 return {
     resetpattern = resetpattern,
