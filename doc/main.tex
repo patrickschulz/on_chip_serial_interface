@@ -1,29 +1,22 @@
 \documentclass[parskip=half]{scrartcl}
 
-\usepackage{fontspec, unicode-math}
-\setmainfont{Libertinus Serif}
-\setsansfont{Libertinus Sans}
-\setmathfont{Libertinus Math}
+%\usepackage{fontspec, unicode-math}
+%\setmainfont{Libertinus Serif}
+%\setsansfont{Libertinus Sans}
+%\setmathfont{Libertinus Math}
 
 \usepackage{tikz}
-\usetikzlibrary{
-    calc,
-    fit,
-    decorations,
-    decorations.markings,
-    decorations.shapes
-}
+
+\input{pkg/tikzsettings}
+\input{pkg/circuitsymbols}
+
 \usepackage{tikz-timing}
 
 \usepackage{booktabs}
 
-\tikzset{
-    %
-}
-
 \title{On-Chip Serial Interface with Low Pin Count}
 \author{Patrick Kurth}
-\date{October 2022}
+\date{June 2023}
 
 \let\command=\texttt
 
@@ -136,5 +129,76 @@
 
     All commands are preceeded by a start sequence.
     The default (and currently implemented) sequence is \command{101}.
+
+    \section{Implementation}
+    \subsection{Register Cells}
+    \subsubsection{Register Cell 0}
+    \begin{tikzpicture}
+        [
+            every label/.style = {font = \ttfamily\scriptsize}
+        ]
+        \node[mux] (hold_write_mux) {};
+        \node[dflipflop, right = of hold_write_mux.out, anchor = D] (dff_in) {};
+        \node[dflipflop, circuits/dflipflop/negative clock edge = true, right = of dff_in] (dff_out) {};
+        \node[mux, right = 1.5cm of dff_out.Q, anchor = in2] (dff_buf_mux) {};
+        \node[andgate, right = of dff_buf_mux.out, anchor = in1] (reset_and_gate) {};
+        \node[dflipflop, right = of reset_and_gate.out, anchor = D] (dff_buf) {};
+        \node[dflipflop, circuits/dflipflop/negative clock edge = true, right = of dff_buf] (dff_store) {};
+        % wires
+        \draw[wire] (hold_write_mux.in2) -- ++(-1, 0) node[port, label=above:{Chain In}] {};
+        \draw[wire] (hold_write_mux.botcontrol) |- ++(-1, -1) node[port, label=above:{enable}] (enableport) {};
+        \draw[wire] (hold_write_mux.out) -- (dff_in.D);
+        \draw[wire] (dff_out.Q) -- ++(0.5, 0) node[dot] (chain_out_dot) {} -- ++(0, 1) -| ($(hold_write_mux.in1)+(-0.5, 0)$) -- (hold_write_mux.in1);
+        \draw[wire] (chain_out_dot) -- (dff_buf_mux.in2);
+        \draw[wire] (dff_buf_mux.out) -- (reset_and_gate.in1);
+        \draw[wire] (dff_in.Q) -- (dff_out.D);
+        \draw[wire] (reset_and_gate.out) -- (dff_buf.D);
+        \draw[wire] (dff_buf.Q) -- node[dot] (bit_out) {} (dff_store.D);
+        \draw[wire] (dff_store.Q) -- ++(0.5, 0) -- ++(0, 1) -| ($(dff_buf_mux.in1)+(-0.5, 0)$) -- (dff_buf_mux.in1);
+        \draw[wire] (dff_buf_mux.botcontrol) |- ++(-1, -1) node[port, label=above:{update}] (updateport) {};
+        \draw[wire] (reset_and_gate.in2) -- ++(-0.5, 0) |- ++(-0.5, -1) node[port, label=above:{reset}] (resetport) {};
+        \draw[wire] (bit_out) -- ++(0, 2) node[port, label=above:{Bit Out}] (bitoutport) {};
+        % clk
+        \node[port, below = of enableport, label = above:clk] (clkport) {};
+        \draw[wire] (clkport) -| node[dot] (clk1) {} ($(dff_in.CLK)+(-0.5, 0)$) -- (dff_in.CLK);
+        \draw[wire] (clk1) -| node[dot] (clk2) {} ($(dff_out.CLK)+(-0.5, 0)$) -- (dff_out.CLK);
+        \draw[wire] (clk2) -| node[dot] (clk3) {} ($(dff_buf.CLK)+(-0.5, 0)$) -- (dff_buf.CLK);
+        \draw[wire] (clk3) -| ($(dff_store.CLK)+(-0.5, 0)$) -- (dff_store.CLK);
+    \end{tikzpicture}
+    \subsubsection{Register Cell 1}
+    \begin{tikzpicture}
+        [
+            every label/.style = {font = \ttfamily\scriptsize}
+        ]
+        \node[mux] (hold_write_mux) {};
+        \node[dflipflop, right = of hold_write_mux.out, anchor = D] (dff_in) {};
+        \node[dflipflop, circuits/dflipflop/negative clock edge = true, right = of dff_in] (dff_out) {};
+        \node[mux, right = 1.5cm of dff_out.Q, anchor = in2] (dff_buf_mux) {};
+        \node[notgate, right = of dff_buf_mux.out, anchor = in] (update_store_not_gate) {};
+        \node[nandgate, right = of update_store_not_gate.out, anchor = in1] (reset_and_gate) {};
+        \node[dflipflop, right = of reset_and_gate.out, anchor = D] (dff_buf) {};
+        \node[dflipflop, circuits/dflipflop/negative clock edge = true, right = of dff_buf] (dff_store) {};
+        % wires
+        \draw[wire] (hold_write_mux.in2) -- ++(-1, 0) node[port, label=above:{Chain In}] {};
+        \draw[wire] (hold_write_mux.botcontrol) |- ++(-1, -1) node[port, label=above:{enable}] (enableport) {};
+        \draw[wire] (hold_write_mux.out) -- (dff_in.D);
+        \draw[wire] (dff_out.Q) -- ++(0.5, 0) node[dot] (chain_out_dot) {} -- ++(0, 1) -| ($(hold_write_mux.in1)+(-0.5, 0)$) -- (hold_write_mux.in1);
+        \draw[wire] (chain_out_dot) -- (dff_buf_mux.in2);
+        \draw[wire] (dff_buf_mux.out) -- (update_store_not_gate.in);
+        \draw[wire] (update_store_not_gate.out) -- (reset_and_gate.in1);
+        \draw[wire] (dff_in.Q) -- (dff_out.D);
+        \draw[wire] (reset_and_gate.out) -- (dff_buf.D);
+        \draw[wire] (dff_buf.Q) -- node[dot] (bit_out) {} (dff_store.D);
+        \draw[wire] (dff_store.Q) -- ++(0.5, 0) -- ++(0, 1) -| ($(dff_buf_mux.in1)+(-0.5, 0)$) -- (dff_buf_mux.in1);
+        \draw[wire] (dff_buf_mux.botcontrol) |- ++(-1, -1) node[port, label=above:{update}] (updateport) {};
+        \draw[wire] (reset_and_gate.in2) -- ++(-0.5, 0) |- ++(-0.5, -1) node[port, label=above:{reset}] (resetport) {};
+        \draw[wire] (bit_out) -- ++(0, 2) node[port, label=above:{Bit Out}] (bitoutport) {};
+        % clk
+        \node[port, below = of enableport, label = above:clk] (clkport) {};
+        \draw[wire] (clkport) -| node[dot] (clk1) {} ($(dff_in.CLK)+(-0.5, 0)$) -- (dff_in.CLK);
+        \draw[wire] (clk1) -| node[dot] (clk2) {} ($(dff_out.CLK)+(-0.5, 0)$) -- (dff_out.CLK);
+        \draw[wire] (clk2) -| node[dot] (clk3) {} ($(dff_buf.CLK)+(-0.5, 0)$) -- (dff_buf.CLK);
+        \draw[wire] (clk3) -| ($(dff_store.CLK)+(-0.5, 0)$) -- (dff_store.CLK);
+    \end{tikzpicture}
 \end{document}
 

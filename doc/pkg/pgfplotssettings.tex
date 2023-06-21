@@ -1,0 +1,131 @@
+\usepgfplotslibrary{groupplots}
+
+% create linestyles
+\tikzset{
+    cross/.style = { postaction={decorate, decoration = crosses}}
+    %dashStarStar/.style={postaction = {decorate, decoration = { markings, mark = between positions 0 and 1 step 5mm with {\draw (-2pt, -2pt) -- (2pt, 2pt);}}}}
+}
+
+\pgfplotsset{
+    compat/show suggested version = false,
+    compat=newest,
+    % settings
+    every axis/.append style={
+        grid=both, 
+        enlarge x limits = false, 
+        enlarge y limits = true, 
+        %rotate ylabel, 
+        width=0.7\linewidth, 
+        height=5cm,
+        scale only axis,
+        scaled ticks=false,
+        axis line style = {thick},
+        tick align = inside,
+        major tick length = {4pt},
+        minor tick length = {2pt},
+        every tick/.append style = {semithick, black},
+        ylabel style = {minimum height = 1cm}
+    },
+    every axis plot/.style={thick, line join = round},
+    label style={font=\normalsize},
+    tick label style={font=\normalsize},
+    grid style={black, line width = 0.3pt, dash pattern = on 0pt off 1.2pt, line cap = round},
+    legend cell align=left,
+    legend pos={south west},
+    legend style = {draw = none},
+    %cycle list = {solid, densely dashed, densely dotted},
+    cycle list = {
+        solid,
+        {dash pattern = on 1pt off 1.5pt},
+        {dash pattern = on 8pt off 4pt},
+        {dash pattern = on 1pt off 0.4pt},
+        {dash pattern = on 3pt off 1pt},
+        {dash pattern = on 1pt off 1pt on 4pt off 1pt on 1pt off 1pt}
+    },
+    % styles to be used
+    textbook/.style = {
+        axis x line = middle, 
+        axis y line = middle, 
+        xlabel style = {at={(xticklabel* cs:1)}, right}, 
+        ylabel style = {at={(yticklabel* cs:1)}, above},
+    },
+    datagraph/.style = {
+        axis lines = box
+    },
+    overlay/.style = {
+        xtick=\empty,
+        axis y line* = right,
+        grid = none
+    },
+    rotate ylabel/.style={ylabel style={rotate=-90}},
+    markline/.style={thick, densely dotted, black},
+    specialline/.style={thick, dashed, black},
+    fillplot/.style={fill=#1, draw=none, fill opacity=0.2},
+    dirac/.style={
+        mark=triangle*,
+        mark options={scale=0.75},
+        ycomb,
+        scatter,
+        visualization depends on={y/abs(y)-1 \as \sign},
+        scatter/@pre marker code/.code={\scope[rotate=90*\sign,yshift=-2pt]}
+    },
+    spectrum/.style={
+        ycomb,
+        mark = none
+    },
+    % clear ticks
+    clear ticklabels/.style = {xticklabels = {}, yticklabels = {}},
+    clear xticklabels/.style = {xticklabels = {}},
+    clear yticklabels/.style = {yticklabels = {}},
+    todo/.style = {
+        axis line style = {red}
+    },
+    % preliminary picture
+    preliminary/.style = {
+        axis line style = {red}
+    },
+    % origin of linear comb plots
+    comb origin infty/.style = {
+        yticklabel = {\pgfmathparse{\tick-1000}\pgfmathprintnumber{\pgfmathresult}},
+        y filter/.expression = {y + 1000}
+    }
+}
+
+% color settings
+\definecolor{prussianblue}{HTML}{12355B}
+\definecolor{viridiangreen}{HTML}{129490}
+\definecolor{chinesered}{HTML}{A33B20}
+\definecolor{urobilin}{HTML}{E6Af2E}
+\definecolor{iguanagreen}{HTML}{70B77E}
+\pgfplotscreateplotcyclelist{patschoulicolor}{%
+    {prussianblue},
+    {viridiangreen},
+    {chinesered},
+    {urobilin},
+    {iguanagreen},
+}
+
+% taken from: https://sashamaps.net/docs/resources/20-colors/
+\definecolor{plotcolor1}{RGB}{230,25,75}
+\definecolor{plotcolor2}{RGB}{60,180,75}
+\definecolor{plotcolor3}{RGB}{255,225,25}
+\definecolor{plotcolor4}{RGB}{0,130,200}
+\definecolor{plotcolor5}{RGB}{245,130,48}
+\definecolor{plotcolor6}{RGB}{145,30,180}
+\definecolor{plotcolor7}{RGB}{70,240,240}
+\definecolor{plotcolor8}{RGB}{240,50,230}
+\definecolor{plotcolor9}{RGB}{210,245,60}
+\definecolor{plotcolor11}{RGB}{250,190,212}
+\definecolor{plotcolor12}{RGB}{0,128,128}
+\definecolor{plotcolor13}{RGB}{220,190,255}
+\definecolor{plotcolor14}{RGB}{170,110,40}
+\definecolor{plotcolor15}{RGB}{255,250,200}
+\definecolor{plotcolor16}{RGB}{128,0,0}
+\definecolor{plotcolor17}{RGB}{170,255,195}
+\definecolor{plotcolor18}{RGB}{128,128,0}
+\definecolor{plotcolor19}{RGB}{255,215,180}
+\definecolor{plotcolor20}{RGB}{0,0,128}
+\definecolor{plotcolor21}{RGB}{128,128,128}
+\definecolor{plotcolor22}{RGB}{255,255,255}
+\definecolor{plotcolor23}{RGB}{0,0,0}
+

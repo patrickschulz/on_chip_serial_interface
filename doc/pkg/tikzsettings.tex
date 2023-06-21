@@ -1,0 +1,116 @@
+\usetikzlibrary{
+    fit,
+    spy,
+    backgrounds,
+    svg.path,
+    arrows,
+    arrows.meta,
+    positioning,
+    calc,
+    patterns,
+    external,
+    decorations,
+    decorations.markings,
+    decorations.shapes,
+}
+
+\tikzset {
+    line/.style={semithick},
+    tip/.style args = {#1 and #2}{
+        line,
+        ->,
+        >=stealth,
+        shorten >= #1,
+        shorten <= #2
+    },
+    tip/.default = {0pt and 0pt},
+    bitip/.style args = {#1 and #2}{
+        line,
+        <->,
+        >=stealth,
+        shorten >= #1,
+        shorten <= #2
+    },
+    bitip/.default = {0pt and 0pt},
+    rtip/.style = {
+        line,
+        <-,
+        >=stealth
+    },
+    vtip/.style = {
+        line,
+        <-,
+        >=stealth,
+        shorten >=2pt, 
+        shorten <=2pt
+    },
+    dot diameter/.store in = \dotdiameter,
+    dot diameter = 1.25pt,
+    dot spacing/.store in = \dotspacing,
+    dot spacing = 1.3pt,
+    dots/.style = {
+        line width = \dotdiameter,
+        line cap = round,
+        dash pattern = on 0pt off \dotspacing
+    },
+    every pin/.style = {pin edge = {rtip, black}, fill = white, inner sep = 1pt},
+    dotgrid/.style={line width = #1, dash pattern = on 0pt off 1.2pt, line cap = round},
+    dotgrid/.default=0.8pt
+}
+
+%% fix pin and label anchors and placement
+%% taken from https://tex.stackexchange.com/questions/246995/tikz-adjusting-pin-anchor
+%\makeatletter
+%\newcommand*\ifStrInTF[2]{%
+%  \edef\tikz@temp{{#1}{#2}}%
+%  \expandafter\pgfutil@in@\tikz@temp
+%  \ifpgfutil@in@\expandafter\pgfutil@firstoftwo\else\expandafter\pgfutil@secondoftwo\fi}
+%\newcommand*\ifStrEmptyTF[1]{%
+%  \def\tikz@temp{#1}\ifx\tikz@temp\pgfutil@empty
+%    \expandafter\pgfutil@firstoftwo\else\expandafter\pgfutil@secondoftwo\fi}
+%
+%\def\tikz@swapanchor#1.#2\tikz@stop#3#4{#1#4#3}
+%\newcommand*\tikzAddAnchor[2]{%
+%  \ifStrInTF{.}{#1}{%
+%    \ifStrEmptyTF{#2}
+%      {\edef#1{\expandafter\tikz@swapanchor#1\tikz@stop{}{}}}
+%      {\edef#1{\expandafter\tikz@swapanchor#1\tikz@stop{#2}{.}}}%
+%  }{%
+%    \ifStrEmptyTF{#2}{}% no true
+%      {\edef#1{#1.#2}}%
+%  }}
+%\tikzset{
+%  pin anchor/.style={tikz@pin@post/.append style={anchor=#1}},
+%  label anchor/.style={tikz@label@post/.append style={anchor=#1}},
+%  pin edge pin anchor/.style={
+%    append after command={\pgfextra\tikzAddAnchor{\tikzlastnode}{#1}\endpgfextra}%
+%  },
+%  pin edge parent anchor/.style={
+%    append after command={\pgfextra\tikzAddAnchor{\tikz@save@last@node}{#1}\endpgfextra}%
+%  }
+%}
+%\makeatother
+
+% custom drawing commands
+\def\showboundingbox{\path[fill=blue, opacity = 0.1] (current bounding box.north west) rectangle (current bounding box.south east);}
+
+% orcid logo, taken from https://tex.stackexchange.com/questions/445563/ieeetran-how-to-include-orcid-in-tex-pdf-with-pdflatex/445583#445583
+\definecolor{orcidlogocol}{HTML}{A6CE39}
+\tikzset{
+    orcidlogo/.pic={
+        \fill[orcidlogocol] svg{M256,128c0,70.7-57.3,128-128,128C57.3,256,0,198.7,0,128C0,57.3,57.3,0,128,0C198.7,0,256,57.3,256,128z};
+        \fill[white] svg{M86.3,186.2H70.9V79.1h15.4v48.4V186.2z}
+                     svg{M108.9,79.1h41.6c39.6,0,57,28.3,57,53.6c0,27.5-21.5,53.6-56.8,53.6h-41.8V79.1z M124.3,172.4h24.5c34.9,0,42.9-26.5,42.9-39.7c0-21.5-13.7-39.7-43.7-39.7h-23.7V172.4z}
+                     svg{M88.7,56.8c0,5.5-4.5,10.1-10.1,10.1c-5.6,0-10.1-4.6-10.1-10.1c0-5.6,4.5-10.1,10.1-10.1C84.2,46.7,88.7,51.3,88.7,56.8z};
+    },
+    orcidlogoblack/.pic={
+        \fill[black] svg{M 256 128 c 0 70.7 -57.3 128 -128 128 C 57.3 256 0 198.7 0 128 C 0 57.3 57.3 0 128 0 C 198.7 0 256 57.3 256 128 z};
+        \fill[white] svg{M86.3,186.2H70.9V79.1h15.4v48.4V186.2z}
+                     svg{M108.9,79.1h41.6c39.6,0,57,28.3,57,53.6c0,27.5-21.5,53.6-56.8,53.6h-41.8V79.1z M124.3,172.4h24.5c34.9,0,42.9-26.5,42.9-39.7c0-21.5-13.7-39.7-43.7-39.7h-23.7V172.4z}
+                     svg{M88.7,56.8c0,5.5-4.5,10.1-10.1,10.1c-5.6,0-10.1-4.6-10.1-10.1c0-5.6,4.5-10.1,10.1-10.1C84.2,46.7,88.7,51.3,88.7,56.8z};
+    }
+}
+\def\orcidsymbol{\tikzexternaldisable \begin{tikzpicture}[yscale = -1, scale = 0.035, transform shape, baseline = -7.5pt] \pic{orcidlogo}; \end{tikzpicture}}
+\def\orcidsymbolblack{\tikzexternaldisable \begin{tikzpicture}[yscale = -1, scale = 0.035, transform shape, baseline = -7.5pt] \pic{orcidlogoblack}; \end{tikzpicture}}
+\def\orcid#1{\tikzexternaldisable \begin{tikzpicture}[yscale = -1, scale = 0.035, transform shape, baseline = -7.5pt] \pic{orcidlogo}; \end{tikzpicture} \textrm{https://orcid.org/#1}}
+\def\orcidblack#1{\tikzexternaldisable \begin{tikzpicture}[yscale = -1, scale = 0.035, transform shape, baseline = -7.5pt] \pic{orcidlogoblack}; \end{tikzpicture} \textrm{https://orcid.org/#1}}

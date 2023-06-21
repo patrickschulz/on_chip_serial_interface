@@ -1,0 +1,157 @@
+\newif\ifcircuitsflip
+
+\makeatletter
+
+% drawing styles
+\tikzset{
+    circuits/general/.style = {thick},
+    wire/.style={circuits/general},
+    cable/.style={circuits/general, cap = round},
+    %rfcable/.style={circuits/general, double, double distance = 0.6pt, cap = round},
+    rfcable/.style={circuits/general, double, cap = round},
+    arrowwire/.style = {
+        circuits/general,
+        ->,
+        >=stealth,
+    },
+    lwire/.style={circuits/general, line cap = rect},
+    scriptsize/.style={font=\scriptsize},
+    ---/.style args={#1 and #2}{to path={-- ++(#1, 0) |- ($(\tikztotarget)+(#2, 0)$)}},
+    ---/.default = 0cm and 0cm,
+    -|-/.style args={#1 and #2}{to path={-| ([xshift=#1, yshift=#2]$(\tikztostart)!0.5!(\tikztotarget)$) |- (\tikztotarget) \tikztonodes}},
+    -|-/.default = 0cm and 0cm,
+    |-|/.style args={#1 and #2}{to path={|- ([xshift=#1, yshift=#2]$(\tikztostart)!0.5!(\tikztotarget)$) -| (\tikztotarget) \tikztonodes}},
+    |-|/.default = 0cm and 0cm,
+    angleconnect/.style args={#1 and #2}{to path={-- ++(#1, 0) -- ($(\tikztotarget)-(#2, 0)$) -- (\tikztotarget)}},
+    angleconnect/.value required = true,
+    angleconnectx/.style args={#1 and #2}{to path={-- ++(#1, 0) -- ($(\tikztotarget)-(#2, 0)$) -- (\tikztotarget)}},
+    angleconnectx/.value required = true,
+    angleconnecty/.style args={#1 and #2}{to path={-- ++(0, #1) -- ($(\tikztotarget)-(0, #2)$) -- (\tikztotarget)}},
+    angleconnecty/.value required = true,
+    tmodule/.style args ={#1 and #2}{draw, rectangle, wire, minimum width = #1, minimum height = #2},
+    tmodule/.default = {0cm and 0cm},
+    module width/.store in=\circuits@module@width,
+    module height/.store in=\circuits@module@height,
+    module width = 1cm,
+    module height = 1cm,
+    module/.style = {
+        wire,
+        draw, rectangle,
+        align = center,
+        minimum width = \circuits@module@width,
+        minimum height = \circuits@module@height
+    },
+    current arrow/.style = {
+        postaction = decorate,
+        decoration = {
+            markings,
+            mark = at position #1 with {\arrow{stealth}}
+        }
+    },
+    current arrow/.default = 0.5,
+    current arrow reversed/.style = {
+        postaction = decorate,
+        decoration = {
+            markings,
+            mark = at position #1 with {\arrowreversed{stealth}}
+        }
+    },
+    current arrow reversed/.default = 0.5,
+    bit line/.style = {
+        wire,
+        postaction = decorate,
+        decoration = {
+            markings,
+            mark = at position 0.5 with { \draw (-#1, -#1) -- (#1, #1); }
+        }
+    },
+    bit line/.default = 2pt,
+    % flip components (effect depends on shape)
+    flip/.is if = circuitsflip,
+    xmirror/.style = {xscale = -1},
+    ymirror/.style = {yscale = -1}
+}
+
+\pgfkeys{
+    % general circuits options
+    /tikz/circuits/line width/.initial = 0.8pt,
+    /tikz/circuits/dot/radius/.initial = 0.05cm,
+    /tikz/dot/.style = {dotshape},
+    /tikz/circuits/port/radius/.initial = 0.05cm,
+    %/tikz/port/.style = {portshape}
+    /tikz/port/.style = {wire, draw=black, fill=white, circle, inner sep = 0cm, minimum size = 0.1cm}
+}
+
+\pgfdeclareshape{dotshape}
+{
+    \saveddimen{\radius}{\pgf@x=\pgfkeysvalueof{/tikz/circuits/dot/radius}}
+    \anchor{center}{\pgfpointorigin}
+    \anchor{north}{\pgfpointorigin}
+    \anchor{south}{\pgfpointorigin}
+    \anchor{west}{\pgfpointorigin}
+    \anchor{east}{\pgfpointorigin}
+    \anchor{north east}{\pgfpointorigin}
+    \anchor{north west}{\pgfpointorigin}
+    \anchor{south east}{\pgfpointorigin}
+    \anchor{south west}{\pgfpointorigin}
+    \backgroundpath{
+        \pgfpathcircle{\pgfpointorigin}{\radius}
+        \pgfusepath{fill}
+    }
+}
+\pgfdeclareshape{portshape}
+{
+    \saveddimen{\radius}{\pgf@x=\pgfkeysvalueof{/tikz/circuits/port/radius}}
+    \anchor{center}{\pgfpointorigin}
+    \backgroundpath{
+        \color{white}
+        \pgfsetstrokecolor{black}
+        \pgfsetlinewidth{\pgfkeysvalueof{/tikz/circuits/line width}}
+        \pgfpathcircle{\pgfpointorigin}{\radius}
+        \pgfusepath{fill, stroke}
+    }
+}
+
+\def\circuitskeysvalueof#1{\pgfkeysvalueof{/tikz/circuits/.cd, #1}}
+
+\pgfkeys{
+    /tikz/circuits/scale/.initial = 1
+}
+
+\input{pkg/symbols/ota}
+\input{pkg/symbols/opamp}
+\input{pkg/symbols/comparator}
+\input{pkg/symbols/capacitor}
+\input{pkg/symbols/resistor}
+\input{pkg/symbols/inductor}
+\input{pkg/symbols/mosfet}
+\input{pkg/symbols/current_source}
+\input{pkg/symbols/ground}
+\input{pkg/symbols/vdd}
+\input{pkg/symbols/impedance}
+\input{pkg/symbols/amplifier}
+\input{pkg/symbols/tgate}
+\input{pkg/symbols/mixer}
+\input{pkg/symbols/oscillator}
+\input{pkg/symbols/antenna}
+\input{pkg/symbols/diode}
+\input{pkg/symbols/gyrator}
+\input{pkg/symbols/inverter}
+\input{pkg/symbols/switch}
+\input{pkg/symbols/magglass}
+\input{pkg/symbols/balun}
+\input{pkg/symbols/chip}
+\input{pkg/symbols/probe}
+\input{pkg/symbols/instrument}
+\input{pkg/symbols/supply}
+\input{pkg/symbols/computer}
+\input{pkg/symbols/pcb}
+\input{pkg/symbols/adc}
+\input{pkg/symbols/dac}
+\input{pkg/symbols/sumpoint}
+\input{pkg/symbols/logic_gates}
+\input{pkg/symbols/sequential_circuits}
+\input{pkg/symbols/mux}
+\makeatother
+
+% vim: ft=plaintex nowrap
