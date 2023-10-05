@@ -1,20 +1,19 @@
-local resetpattern = { 0, 0, 0, 0, 0, 0, 0, 0 }
+local resetpattern = { 1, 1, 1, 1, 0, 0, 0, 0 }
 local data_length = #resetpattern
 local data_numbits = math.ceil(math.log(data_length + 1, 2))
 
 local start_pattern = { 1, 0, 1 }
 
 --[[
-    the minimum number of consecutive ones for internal reset
-    depends on the longest legal sequence of ones
-    every command ends with a zero stop bit
-    when 1...1 is sent as data, this data are surrounded by:
+    The minimum number of consecutive ones for internal reset depends on the longest legal sequence of ones.
+    Every command ends with a zero stop bit.
+    When 1...1 is sent as data, this data are surrounded by:
     START SEQUENCE (101) + stop bit (0) + 1...1 + high value of next start pattern
-    this means that !WITH THE CURRENT START SEQUENCE! the longest legal consecutive
-    sequence of ones is DATA_LEN + 1
+    this means that !WITH THE CURRENT START SEQUENCE! the longest legal consecutive sequence of ones is DATA_LEN + 1
     the number of reset bits must be the *next* power of two
     (e.g. if DATA_LEN + 1 is 4, the number of reset bits must be 8!)
     the following expression calculates this by adding one more (+2)
+    FIXME: incorporate the start pattern into the calculation
     FIXME: for a very small DATA_LEN, the command length has to be considered
     as well, as the command register needs to be flushed during the reset
     this is important for the interfacing circuits
@@ -27,6 +26,7 @@ local reset_numbits = 2 ^ reset_length
 -- this ensures that the line is pulled down after a command
 local commands = {
     reset   = { 0, 0, },
+    -- update used to exist, but I don't think there is a real use case for writing without updating
     --update  = { 0, 1, },
     receive = { 1, 0, },
     send    = { 1, 1, },
@@ -40,9 +40,9 @@ for _, command in pairs(commands) do
     commands_length = len
 end
 
-local idle_cycles = 5 -- FIXME: figure out the correct value for this
+local idle_cycles = 5 -- FIXME: figure out the minimum value for this
                       --        this is most likely more of an issue for low data lenghts
-                      --        furthermore, it depends on the exact sequence of commands so also an update could be problematic
+                      --        furthermore, it depends on the exact sequence of commands so also a receive could be problematic
 
 return {
     resetpattern = resetpattern,

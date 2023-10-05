@@ -3,46 +3,51 @@ function parameters()
 end
 
 function layout(register)
-    local invref = pcell.create_layout("stdcells/not_gate")
-    local invname = pcell.add_cell_reference(invref, "not_gate")
-    local nandref = pcell.create_layout("stdcells/nand_gate")
-    local nandname = pcell.add_cell_reference(nandref, "nand_gate")
-    local dffpref = pcell.create_layout("stdcells/dff")
-    local dffpname = pcell.add_cell_reference(dffpref, "dffp")
-    local dffnref = pcell.create_layout("stdcells/dff")
-    local dffnname = pcell.add_cell_reference(dffnref, "dffn")
-    local dffprref = pcell.create_layout("stdcells/dff")
-    local dffprname = pcell.add_cell_reference(dffprref, "dffpr")
-    local fillref = pcell.create_layout("stdcells/isogate")
-    local fillname = pcell.add_cell_reference(fillref, "isogate")
-
-    local rows = { 
-        { 
-            { reference = fillname, instance = "fill_1_1" }, 
-            { reference = fillname, instance = "fill_1_2" }, 
-            { reference = fillname, instance = "fill_1_3" }, 
-            { reference = fillname, instance = "fill_1_4" }, 
-            { reference = fillname, instance = "fill_1_5" }, 
-            { reference = fillname, instance = "fill_1_6" }, 
-            { reference = fillname, instance = "fill_1_7" }, 
-            { reference = fillname, instance = "fill_1_8" }, 
-            { reference = dffprname,  instance = "dffpr"  }, 
+    pcell.push_overwrites("basic/mosfet", {
+        actext = 80
+    })
+    pcell.push_overwrites("stdcells/base", {
+        pnumtracks = 5,
+        nnumtracks = 5,
+        numinnerroutes= 3,
+        drawtopbotwelltaps = false,
+        powerwidth = 200,
+        routingwidth = 60,
+        routingspace = 60,
+        basepwidth = 500,
+        basenwidth = 500,
+    })
+    local bp = pcell.get_parameters("stdcells/base")
+    local cellnames = {
+        {
+            { reference = "mux",        instance = "hold_write_mux"  },
+            { reference = "dffnq",      instance = "dff_in"  },
+            { reference = "dffpq",      instance = "dff_out"  },
+            { reference = "mux",        instance = "dff_buf_mux"  },
         },
-        { 
-            { reference = invname,    instance = "inv"    }, 
-            { reference = nandname,   instance = "nand1"  }, 
-            { reference = nandname,   instance = "nand2"  }, 
-            { reference = dffnname,   instance = "dffn"   }, 
-        },
-        { 
-            { reference = nandname,   instance = "nand3"  }, 
-            { reference = fillname, instance = "fill_3_1" }, 
-            { reference = fillname, instance = "fill_3_2" }, 
-            { reference = fillname, instance = "fill_3_3" }, 
-            { reference = fillname, instance = "fill_3_4" }, 
-            { reference = fillname, instance = "fill_3_5" }, 
-            { reference = dffpname,   instance = "dffp"   }, 
+        {
+            { reference = "and_gate",   instance = "reset_and_gate"  },
+            { reference = "dffpq",      instance = "dff_buf"  },
+            { reference = "dffnq",      instance = "dff_store"  },
         },
     }
+    local xpitch = bp.gspace + bp.glength
+    local rows = placement.create_reference_rows(cellnames, xpitch)
     local cells = placement.rowwise(register, rows)
+    -- all wires:
+    --[[
+    input wire clk;
+    input wire reset;
+    input wire enable;
+    input wire update;
+    input wire chain_in;
+    output wire chain_out;
+    output wire bit_out;
+    wire ff_in;
+    wire store;
+    wire hold_write;
+    wire in_or_reset;
+    wire update_or_store;
+    --]]
 end
+

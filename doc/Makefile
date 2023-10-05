@@ -1,5 +1,5 @@
 doc.pdf: main.tex
-	lualatex -jobname doc main.tex
+	pdflatex -jobname doc main.tex
 
 .PHONY: clean
 clean:

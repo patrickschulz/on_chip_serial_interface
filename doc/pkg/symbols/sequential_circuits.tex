@@ -1,0 +1,10 @@
+\newif\if@circuits@sequentiallogic@drawreset
+\tikzset{
+    circuits/sequential logic/draw reset/.is if=@circuits@sequentiallogic@drawreset,
+}
+\input{pkg/symbols/dflipflop}
+\input{pkg/symbols/counter}
+\input{pkg/symbols/register}
+\input{pkg/symbols/statemachine}
+
+% vim: ft=plaintex nowrap
