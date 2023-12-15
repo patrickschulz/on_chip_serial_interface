@@ -25,8 +25,11 @@ all:
 	@echo "  timing"
 	@echo required tools are iverilog for simulation, gtkwave for viewing the waveforms, yosys for synthesis and openSTA for timing analysis
 
+.PHONY: generate_verilog
+generate_verilog: $(sources)
+
 .PHONY: simulate
-simulate: $(sources) $(gatelevelsources) testbench.v
+simulate: generate_verilog $(gatelevelsources) testbench.v
 	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
@@ -41,26 +44,29 @@ simulate_synth: synth testbench.v
 waveforms:
 	@$(waveformviewer) -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
+resetpattern.lua: generate_example_resetpattern.lua
+	@lua generate_example_resetpattern.lua
+
 # generated verilog source files
-reset_counter.v: generate_reset_counter.lua settings.lua
+reset_counter.v: generate_reset_counter.lua settings.lua resetpattern.lua
 	@lua generate_reset_counter.lua
 
-command_register.v: generate_command_register.lua settings.lua
+command_register.v: generate_command_register.lua settings.lua resetpattern.lua
 	@lua generate_command_register.lua
 
-data_counter.v: generate_data_counter.lua settings.lua
+data_counter.v: generate_data_counter.lua settings.lua resetpattern.lua
 	@lua generate_data_counter.lua
 
-shift_register.v: generate_shift_register.lua settings.lua
+shift_register.v: generate_shift_register.lua settings.lua resetpattern.lua
 	@lua generate_shift_register.lua
 
-control.v: generate_control.lua settings.lua
+control.v: generate_control.lua settings.lua resetpattern.lua
 	@lua generate_control.lua
 
-toplevel.v: generate_toplevel.lua settings.lua
+toplevel.v: generate_toplevel.lua settings.lua resetpattern.lua
 	@lua generate_toplevel.lua
 
-testbench.v: generate_testbench.lua settings.lua
+testbench.v: generate_testbench.lua settings.lua resetpattern.lua
 	@lua generate_testbench.lua
 
 serial_interface_synthesized.v: $(sources) $(gatelevelsources)
