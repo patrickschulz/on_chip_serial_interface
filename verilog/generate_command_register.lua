@@ -11,6 +11,8 @@ lines:add( "    input wire receive;")
 lines:add( "    output wire empty;")
 lines:add( "    output wire ready;")
 lines:add( "    output wire [%d:0] command;", settings.commands_length - 1)
+lines:add(string.format("    reg [%d:0] cmd_reg;", settings.commands_length + settings.start_pattern_length - 1))
+lines:add(string.format("    reg [%d:0] cmd_reg_pre;", settings.commands_length + settings.start_pattern_length - 1))
 lines:add( "    assign empty = cmd_reg == 0;")
 lines:add( "    assign ready =")
 for i = 1, settings.start_pattern_length do
@@ -24,8 +26,6 @@ for i = 1, settings.start_pattern_length do
     lines:add(table.concat(line))
 end
 lines:add("    assign command = cmd_reg[%d:0];", settings.commands_length - 1)
-lines:add(string.format("    reg [%d:0] cmd_reg;", settings.commands_length + settings.start_pattern_length - 1))
-lines:add(string.format("    reg [%d:0] cmd_reg_pre;", settings.commands_length + settings.start_pattern_length - 1))
 lines:add("    always @ (negedge clk) begin")
 lines:add("        cmd_reg <= cmd_reg_pre;")
 lines:add("    end")
