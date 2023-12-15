@@ -1,4 +1,5 @@
-local resetpattern = { 1, 1, 1, 1, 0, 0, 0, 0 }
+local resetpattern = require "resetpattern"
+
 local data_length = #resetpattern
 local data_numbits = math.ceil(math.log(data_length + 1, 2))
 
