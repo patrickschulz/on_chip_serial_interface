@@ -5,6 +5,7 @@ synthesis.log
 # generated verilog source files
 shift_register.v
 serial_interface.v
+serial_interface_defines.v
 data_counter.v
 reset_counter.v
 command_register.v
