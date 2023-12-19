@@ -271,6 +271,11 @@ lines:add("    end")
 -- finished toplevel module
 lines:add("endmodule")
 
-local file = io.open("serial_interface.v", "w")
-file:write(table.concat(lines, "\n"))
-file:close()
+local toplevelfile = io.open("serial_interface.v", "w")
+toplevelfile:write(table.concat(lines, "\n"))
+toplevelfile:close()
+
+-- generate defines file (number of bits)
+local definesfile = io.open("serial_interface_defines.v", "w")
+definesfile:write(string.format("`define SERIAL_INTERFACE_DATA_LENGTH %d", settings.data_length))
+definesfile:close()
