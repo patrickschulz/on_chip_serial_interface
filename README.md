@@ -22,3 +22,9 @@ There is an example file `generate_example_resetpattern.lua`, which generates a 
 The generation of the code of the serial interface expects the second file.
 For customization, this file should be modified by the user.
 It is a regular lua file, which should return one table with 1s and 0s.
+
+## Layout
+The ultimate goal of this project is to provide a full layout in a chosen technology node.
+This should be achieved by using the openPCells layout generator (also written by me).
+Currently though, the only working part is the verilog code.
+The documentation and layout folders only contain rough sketches.
