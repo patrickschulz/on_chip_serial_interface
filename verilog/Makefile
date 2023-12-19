@@ -109,4 +109,4 @@ timing: synth
 
 .PHONY: clean
 clean:
-	@rm -f signals.vcd serial_interface_synthesized.v reset_counter.v data_counter.v command_register.v shift_register.v control.v serial_interface.v testbench.v synthesis.log
+	@rm -f signals.vcd serial_interface_synthesized.v reset_counter.v data_counter.v command_register.v shift_register.v control.v serial_interface.v serial_interface_defines.v testbench.v synthesis.log
