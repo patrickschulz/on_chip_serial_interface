@@ -59,6 +59,6 @@ table.insert(lines, "        .bit_out(bit_out)")
 table.insert(lines, "    );")
 table.insert(lines, "endmodule")
 
-local file = io.open("toplevel.v", "w")
+local file = io.open("serial_interface.v", "w")
 file:write(table.concat(lines, "\n"))
 file:close()

@@ -16,6 +16,14 @@ function M.write_lines(filename, lines)
     file:close()
 end
 
+function M.fill_length_with(length, filler)
+    local t = {}
+    for i = 1, length do
+        t[i] = filler
+    end
+    return t
+end
+
 function M.format_binary(binnum)
     local numstr = {}
     for i = 1, #binnum do

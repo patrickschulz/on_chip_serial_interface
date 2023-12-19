@@ -1,4 +1,4 @@
-sources := data_counter.v reset_counter.v control.v command_register.v toplevel.v
+sources := data_counter.v reset_counter.v control.v command_register.v serial_interface.v
 gatelevelsources := register_cell_0.v register_cell_1.v shift_register.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012
@@ -18,12 +18,16 @@ timing_tool 	:= sta
 .PHONY: all
 all:
 	@echo possible actions:
+	@echo "  export"
 	@echo "  simulate"
 	@echo "  synth"
 	@echo "  simulate_synth"
 	@echo "  waveforms"
 	@echo "  timing"
 	@echo required tools are iverilog for simulation, gtkwave for viewing the waveforms, yosys for synthesis and openSTA for timing analysis
+
+.PHONY: export
+export: generate_verilog
 
 .PHONY: generate_verilog
 generate_verilog: $(sources)
@@ -63,8 +67,9 @@ shift_register.v: generate_shift_register.lua settings.lua resetpattern.lua
 control.v: generate_control.lua settings.lua resetpattern.lua
 	@lua generate_control.lua
 
-toplevel.v: generate_toplevel.lua settings.lua resetpattern.lua
-	@lua generate_toplevel.lua
+serial_interface.v: generate_toplevel_flat.lua generate_toplevel.lua settings.lua resetpattern.lua
+	#@lua generate_toplevel.lua
+	@lua generate_toplevel_flat.lua
 
 testbench.v: generate_testbench.lua settings.lua resetpattern.lua
 	@lua generate_testbench.lua
@@ -104,4 +109,4 @@ timing: synth
 
 .PHONY: clean
 clean:
-	@rm -f signals.vcd serial_interface_synthesized.v reset_counter.v data_counter.v command_register.v shift_register.v control.v toplevel.v testbench.v synthesis.log
+	@rm -f signals.vcd serial_interface_synthesized.v reset_counter.v data_counter.v command_register.v shift_register.v control.v serial_interface.v testbench.v synthesis.log
