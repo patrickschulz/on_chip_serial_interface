@@ -1,7 +1,7 @@
 sources := data_counter.v reset_counter.v control.v command_register.v serial_interface.v
 gatelevelsources := register_cell_0.v register_cell_1.v shift_register.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
-VFLAGS := -g2012 -Wall
+VFLAGS := -g2012 -Wall -Wno-timescale
 
 # intermediate files
 compiled_design  := design
@@ -34,13 +34,13 @@ generate_verilog: $(sources)
 
 .PHONY: simulate
 simulate: generate_verilog $(gatelevelsources) testbench.v
-	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
+	@$(simulator) $(VFLAGS) timescale.v $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
 
 .PHONY: simulate_synth
 simulate_synth: synth testbench.v
-	@$(simulator) $(VFLAGS) serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
+	@$(simulator) $(VFLAGS) timescale.v serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
 
