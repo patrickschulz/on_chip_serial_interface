@@ -8,7 +8,7 @@ local start_pattern = { 1, 0, 1 }
 --[[
     The minimum number of consecutive ones for internal reset depends on the longest legal sequence of ones.
     Every command ends with a zero stop bit.
-    When 1...1 is sent as data, this data are surrounded by:
+    When 1...1 is sent, this data are surrounded by:
     START SEQUENCE (101) + stop bit (0) + 1...1 + high value of next start pattern
     this means that !WITH THE CURRENT START SEQUENCE! the longest legal consecutive sequence of ones is DATA_LEN + 1
     the number of reset bits must be the *next* power of two
