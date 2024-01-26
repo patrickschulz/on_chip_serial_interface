@@ -51,7 +51,7 @@ lines:add("    assign enable_data_counter = (curr_state == RECEIVE_DATA_ST) || (
 lines:add("")
 lines:add("    // command register")
 lines:add("    wire receive_command;")
-lines:add("    assign receive_command = curr_state == WAIT_FOR_COMMAND_ST;")
+lines:add("    assign receive_command = !reset_flag && (curr_state == WAIT_FOR_COMMAND_ST);")
 lines:add("    wire command_ready;")
 lines:add("    wire command_empty;")
 lines:add("    wire [%d:0] command;", settings.commands_length - 1)
