@@ -1,7 +1,7 @@
 sources := data_counter.v reset_counter.v control.v command_register.v serial_interface.v
 gatelevelsources := register_cell_0.v register_cell_1.v shift_register.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
-VFLAGS := -g2012 -Wall
+VFLAGS := -g2012 -Wall -Wno-timescale
 
 # intermediate files
 compiled_design  := design
