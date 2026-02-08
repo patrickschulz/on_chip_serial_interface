@@ -18,6 +18,7 @@ timing_tool 	:= sta
 .PHONY: all
 all:
 	@echo possible actions:
+	@echo "  resetpattern"
 	@echo "  export"
 	@echo "  simulate"
 	@echo "  synth"
@@ -25,6 +26,10 @@ all:
 	@echo "  waveforms"
 	@echo "  timing"
 	@echo required tools are iverilog for simulation, gtkwave for viewing the waveforms, yosys for synthesis and openSTA for timing analysis
+
+.PHONY: resetpattern
+resetpattern:
+	lua generate_resetpattern.lua
 
 .PHONY: export
 export: generate_verilog
