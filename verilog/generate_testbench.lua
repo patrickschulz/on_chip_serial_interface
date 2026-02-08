@@ -8,7 +8,7 @@ local lower_limit = 0
 local upper_limit = 2 ^ settings.data_length - 1
 
 lines:add("//`define DEBUG_LEVEL")
-lines:add("`define LOWER_LIMIT %d", 0)
+lines:add("`define LOWER_LIMIT %d", lower_limit)
 lines:add("`define UPPER_LIMIT %d", upper_limit)
 lines:add("")
 lines:add("`define IDLE_CYCLES %d", settings.idle_cycles)
