@@ -39,13 +39,13 @@ generate_verilog: $(sources)
 
 .PHONY: simulate
 simulate: generate_verilog $(gatelevelsources) testbench.v
-	@$(simulator) $(VFLAGS) $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
+	@$(simulator) $(VFLAGS) timescale.v $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
 
 .PHONY: simulate_synth
 simulate_synth: synth testbench.v
-	@$(simulator) $(VFLAGS) serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
+	@$(simulator) $(VFLAGS) timescale.v serial_interface_synthesized.v testbench.v $(stdlib).v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
 
