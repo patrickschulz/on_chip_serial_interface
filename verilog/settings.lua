@@ -41,8 +41,9 @@ for _, command in pairs(commands) do
     commands_length = len
 end
 
+-- number of idle cycles between commands (only for testbench)
 local idle_cycles = 5 -- FIXME: figure out the minimum value for this
-                      --        this is most likely more of an issue for low data lenghts
+                      --        this is most likely more of an issue for low data lengths
                       --        furthermore, it depends on the exact sequence of commands so also a receive could be problematic
 
 return {
