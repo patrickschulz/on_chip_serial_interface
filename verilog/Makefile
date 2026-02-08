@@ -28,8 +28,7 @@ all:
 	@echo required tools are iverilog for simulation, gtkwave for viewing the waveforms, yosys for synthesis and openSTA for timing analysis
 
 .PHONY: resetpattern
-resetpattern:
-	lua generate_resetpattern.lua
+resetpattern: resetpattern.lua
 
 .PHONY: export
 export: generate_verilog
@@ -53,8 +52,8 @@ simulate_synth: synth testbench.v
 waveforms:
 	@$(waveformviewer) -O /dev/null -A --rcvar 'fontname_signals Monospace 14' --rcvar 'fontname_waves Monospace 10' signals.vcd signals.gtkw &
 
-resetpattern.lua: generate_example_resetpattern.lua
-	@lua generate_example_resetpattern.lua
+resetpattern.lua: generate_resetpattern.lua
+	@lua generate_resetpattern.lua
 
 # generated verilog source files
 reset_counter.v: generate_reset_counter.lua settings.lua resetpattern.lua
