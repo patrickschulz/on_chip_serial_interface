@@ -10,6 +10,12 @@ function M.make_lines_insert()
     return setmetatable({}, meta)
 end
 
+function M.append_lines(lines, toappend)
+    for _, line in ipairs(toappend) do
+        table.insert(lines, line)
+    end
+end
+
 function M.write_lines(filename, lines)
     local file = io.open(filename, "w")
     file:write(table.concat(lines, "\n"))

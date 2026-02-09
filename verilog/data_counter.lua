@@ -1,3 +1,40 @@
+local util = require "util"
+
+return function(settings, flat)
+    local lines = util.make_lines_insert()
+    local prefix = flat and "_data_counter_" or ""
+    if not flat then -- module header
+        lines:add("module data_counter")
+        lines:add("(")
+        lines:add("    input wire clk,")
+        lines:add("    input wire enable_data_counter,")
+        lines:add("    output wire data_ready")
+        lines:add(");")
+    else
+        lines:add("    // data counter")
+    end
+    lines:add("    reg [%d:0] _data_counter_outp;", settings.data_numbits - 1)
+    lines:add("    reg [%d:0] _data_counter_outn;", settings.data_numbits - 1)
+    lines:add("    assign data_ready = (_data_counter_outn == 2 ** %d - %d);", settings.data_numbits, settings.data_length)
+    lines:add("    always @(posedge clk) begin")
+    lines:add("        if(enable_data_counter) begin")
+    lines:add("            _data_counter_outp <= _data_counter_outn - 1;")
+    lines:add("        end")
+    lines:add("        else begin")
+    lines:add("            _data_counter_outp <= %s;", util.format_binary(util.fill_length_with(settings.data_numbits, 1)))
+    lines:add("        end")
+    lines:add("    end")
+    lines:add("    always @(negedge clk) begin")
+    lines:add("        _data_counter_outn <= _data_counter_outp;")
+    lines:add("    end")
+    lines:add("")
+    if not flat then
+        lines:add("endmodule")
+    end
+    return lines
+end
+
+--[[ old content:
 local settings = require "settings"
 
 local lines = {}
@@ -23,3 +60,4 @@ table.insert(lines, "endmodule")
 local file = io.open("data_counter.v", "w")
 file:write(table.concat(lines, "\n"))
 file:close()
+--]]

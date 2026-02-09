@@ -1,4 +1,3 @@
-sources := data_counter.v reset_counter.v control.v command_register.v serial_interface.v
 gatelevelsources := register_cell_0.v register_cell_1.v shift_register.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012 -Wall -Wno-timescale
@@ -31,14 +30,11 @@ all:
 resetpattern: resetpattern.lua
 
 .PHONY: export
-export: generate_verilog
-
-.PHONY: generate_verilog
-generate_verilog: $(sources)
+export: serial_interface.v
 
 .PHONY: simulate
 simulate: generate_verilog $(gatelevelsources) testbench.v
-	@$(simulator) $(VFLAGS) timescale.v $(stdlib).v $(sources) $(gatelevelsources) testbench.v -o $(compiled_design)
+	@$(simulator) $(VFLAGS) timescale.v $(stdlib).v $(gatelevelsources) serial_interface.v testbench.v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
 
@@ -56,32 +52,19 @@ resetpattern.lua: generate_resetpattern.lua
 	@lua generate_resetpattern.lua
 
 # generated verilog source files
-reset_counter.v: generate_reset_counter.lua settings.lua resetpattern.lua
-	@lua generate_reset_counter.lua
-
-command_register.v: generate_command_register.lua settings.lua resetpattern.lua
-	@lua generate_command_register.lua
-
-data_counter.v: generate_data_counter.lua settings.lua resetpattern.lua
-	@lua generate_data_counter.lua
-
 shift_register.v: generate_shift_register.lua settings.lua resetpattern.lua
 	@lua generate_shift_register.lua
 
-control.v: generate_control.lua settings.lua resetpattern.lua
-	@lua generate_control.lua
-
-serial_interface.v: generate_toplevel_flat.lua generate_toplevel.lua settings.lua resetpattern.lua
-	#@lua generate_toplevel.lua
-	@lua generate_toplevel_flat.lua
+serial_interface.v: generate_toplevel.lua settings.lua resetpattern.lua
+	@lua generate_toplevel.lua
 
 testbench.v: generate_testbench.lua settings.lua resetpattern.lua
 	@lua generate_testbench.lua
 
-serial_interface_synthesized.v: $(sources) $(gatelevelsources)
+serial_interface_synthesized.v: serial_interface.v $(gatelevelsources)
 	@echo "synthesizing..."
 	@echo "# RTL sources" > $(synthesis_script);
-	@for source in $(sources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
+	@printf "read_verilog -sv %s\n" "serial_interface.v" >> $(synthesis_script)
 	@echo "# gate-level sources" >> $(synthesis_script);
 	@for source in $(gatelevelsources); do printf "read_verilog -sv %s\n" "$$source" >> $(synthesis_script); done
 	@echo "# liberty file" >> $(synthesis_script);
@@ -113,4 +96,4 @@ timing: synth
 
 .PHONY: clean
 clean:
-	@rm -f signals.vcd serial_interface_synthesized.v reset_counter.v data_counter.v command_register.v shift_register.v control.v serial_interface.v serial_interface_defines.v testbench.v synthesis.log
+	@rm -f resetpattern.lua signals.vcd serial_interface_synthesized.v shift_register.v serial_interface.v serial_interface_defines.v testbench.v synthesis.log
