@@ -1,4 +1,4 @@
-gatelevelsources := register_cell_0.v register_cell_1.v shift_register.v
+gatelevelsources := register_cell_0.v register_cell_1.v
 stdlib := /home/pkurth/Workspace/openPCells/resources/opc
 VFLAGS := -g2012 -Wall -Wno-timescale
 
@@ -33,7 +33,7 @@ resetpattern: resetpattern.lua
 export: serial_interface.v
 
 .PHONY: simulate
-simulate: generate_verilog $(gatelevelsources) testbench.v
+simulate: serial_interface.v $(gatelevelsources) testbench.v
 	@$(simulator) $(VFLAGS) timescale.v $(stdlib).v $(gatelevelsources) serial_interface.v testbench.v -o $(compiled_design)
 	@$(simulator_vm) $(compiled_design)
 	@rm $(compiled_design)
@@ -52,10 +52,7 @@ resetpattern.lua: generate_resetpattern.lua
 	@lua generate_resetpattern.lua
 
 # generated verilog source files
-shift_register.v: generate_shift_register.lua settings.lua resetpattern.lua
-	@lua generate_shift_register.lua
-
-serial_interface.v: generate_toplevel.lua settings.lua resetpattern.lua
+serial_interface.v: generate_toplevel.lua control.lua reset_counter.lua data_counter.lua shift_register.lua settings.lua resetpattern.lua
 	@lua generate_toplevel.lua
 
 testbench.v: generate_testbench.lua settings.lua resetpattern.lua

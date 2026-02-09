@@ -57,5 +57,4 @@ return {
     commands = commands,
     commands_length = commands_length,
     idle_cycles = idle_cycles,
-    generate_flat = true,
 }
