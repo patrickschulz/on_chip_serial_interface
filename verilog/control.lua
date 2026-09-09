@@ -1,5 +1,7 @@
 local util = require "util"
 
+-- the SEND_DATA_SETUP_ST and SEND_DATA_RECOVER_ST states allow a margin of one clock cycle for the switching of the drive direction
+
 return function(settings, flat)
     local lines = util.make_lines_insert()
     local prefix = flat and "_control_" or ""
