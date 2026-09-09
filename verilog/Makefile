@@ -1,5 +1,5 @@
 gatelevelsources := register_cell_0.v register_cell_1.v
-stdlib := /home/pkurth/Workspace/openPCells/resources/opc
+stdlib := ../stdlib/opc
 VFLAGS := -g2012 -Wall -Wno-timescale
 
 # intermediate files
