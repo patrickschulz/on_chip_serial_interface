@@ -8,6 +8,8 @@ local lower_limit = 0
 --local upper_limit = 2 ^ settings.data_length - 1
 local upper_limit = 128
 
+local include_pulldown = false
+
 lines:add("//`define DEBUG_LEVEL")
 lines:add("`define LOWER_LIMIT %d", lower_limit)
 lines:add("`define UPPER_LIMIT %d", upper_limit)
@@ -36,7 +38,9 @@ lines:add("    reg [0:%d] test_data;", settings.data_length - 1)
 lines:add("    reg [0:%d] test_data_out;", settings.data_length - 1)
 lines:add("")
 lines:add("    assign (supply0, supply1) data_inout = (write_not_read == 1'b1) ? data_in : 1'bZ;")
+if include_pulldown then
 lines:add("    pulldown(data_inout);")
+end
 lines:add("")
 lines:add("    // place serial interface DUT")
 lines:add("    serial_interface serial_interface(")
