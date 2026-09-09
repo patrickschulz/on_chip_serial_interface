@@ -77,6 +77,7 @@ serial_interface_synthesized.v: serial_interface.v $(gatelevelsources)
 	@echo write_verilog serial_interface_synthesized.v >> $(synthesis_script)
 	@$(synthesis_tool) -s $(synthesis_script) -l synthesis.log > /dev/null
 	@rm $(synthesis_script)
+	@rm -f abc.history
 
 .PHONY: synth
 synth: serial_interface_synthesized.v
@@ -93,4 +94,4 @@ timing: synth
 
 .PHONY: clean
 clean:
-	@rm -f resetpattern.lua signals.vcd serial_interface_synthesized.v shift_register.v serial_interface.v serial_interface_defines.v testbench.v synthesis.log
+	@rm -f resetpattern.lua signals.vcd serial_interface_synthesized.v shift_register.v serial_interface.v serial_interface_defines.v testbench.v synthesis.log abc.history
